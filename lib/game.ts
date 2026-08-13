@@ -76,6 +76,7 @@ export function resolvePlay(game: Game, input: PlayInput, now: Date, id: () => s
   });
 
   const defense = input.defense;
+  if (defense && !DEFENSE_CARD[defense]) throw new Error("defensa inválida");
   if (defense) g.usages.push({ id: id(), teamId: victimId, cardId: DEFENSE_CARD[defense], at });
 
   if (!defense) {

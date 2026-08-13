@@ -119,6 +119,16 @@ describe("resolvePlay", () => {
     expect(original.usages).toHaveLength(0);
   });
 
+  it("rechaza una defensa desconocida", () => {
+    expect(() =>
+      resolvePlay(
+        baseGame(),
+        { attackerId: "t2", cardId: "naufrago", victimId: "t1", defense: "escudo" as never },
+        NOW, seq(),
+      ),
+    ).toThrow();
+  });
+
   it("rechaza carta inexistente, defensa como jugada, y sabotaje sin víctima", () => {
     expect(() => resolvePlay(baseGame(), { attackerId: "t1", cardId: "nope" }, NOW, seq())).toThrow();
     expect(() => resolvePlay(baseGame(), { attackerId: "t1", cardId: "casco-blindado" }, NOW, seq())).toThrow();
