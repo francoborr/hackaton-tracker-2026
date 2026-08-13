@@ -10,13 +10,18 @@ export function PinGate({ onOk }: { onOk: () => void }) {
 
   async function verify(pin: string) {
     setChecking(true);
-    const res = await fetch("/api/pin", { headers: { "x-jury-pin": pin } });
-    setChecking(false);
-    if (res.ok) {
-      setPin(pin);
-      onOk();
-    } else {
+    try {
+      const res = await fetch("/api/pin", { headers: { "x-jury-pin": pin } });
+      if (res.ok) {
+        setPin(pin);
+        onOk();
+      } else {
+        setError(true);
+      }
+    } catch {
       setError(true);
+    } finally {
+      setChecking(false);
     }
   }
 
@@ -48,7 +53,9 @@ export function usePinVerified(): [boolean | null, () => void] {
   const [ok, setOk] = useState<boolean | null>(null);
   // verificación inicial con el PIN guardado
   useEffect(() => {
-    fetch("/api/pin", { headers: { "x-jury-pin": getPin() } }).then((res) => setOk(res.ok));
+    fetch("/api/pin", { headers: { "x-jury-pin": getPin() } })
+      .then((res) => setOk(res.ok))
+      .catch(() => setOk(false));
   }, []);
   return [ok, () => setOk(true)];
 }

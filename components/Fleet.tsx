@@ -24,7 +24,8 @@ export function Fleet({ game, onChange }: { game: Game; onChange: () => void }) 
 
   async function remove(id: string, teamName: string) {
     if (!confirm(`¿Quitar a ${teamName} de la flota?`)) return;
-    await mutate(`/api/teams/${id}`, "DELETE");
+    const res = await mutate(`/api/teams/${id}`, "DELETE");
+    if (res.status === 401) alert("PIN inválido — recargá la página");
     onChange();
   }
 
