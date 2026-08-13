@@ -129,6 +129,16 @@ describe("resolvePlay", () => {
     ).toThrow();
   });
 
+  it("rechaza una clave heredada de Object.prototype como defensa", () => {
+    expect(() =>
+      resolvePlay(
+        baseGame(),
+        { attackerId: "t2", cardId: "naufrago", victimId: "t1", defense: "toString" as never },
+        NOW, seq(),
+      ),
+    ).toThrow("defensa inválida");
+  });
+
   it("rechaza carta inexistente, defensa como jugada, y sabotaje sin víctima", () => {
     expect(() => resolvePlay(baseGame(), { attackerId: "t1", cardId: "nope" }, NOW, seq())).toThrow();
     expect(() => resolvePlay(baseGame(), { attackerId: "t1", cardId: "casco-blindado" }, NOW, seq())).toThrow();
