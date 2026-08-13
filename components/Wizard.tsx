@@ -15,13 +15,13 @@ const DEFENSES: { key: Defense | "no"; name: string; hint?: string }[] = [
   { key: "botin", name: "Botín de repuesto", hint: "sufre +1 ayuda" },
 ];
 
-const CRUMBS: Record<Step, string> = {
-  atk: "Paso 1 · Barco",
-  card: "Paso 2 · Carta",
-  target: "Paso 3 · Objetivo",
-  def: "Paso 4 · Defensa",
-  redirect: "Paso 4b · Redirigir",
-  confirm: "Paso final · Confirmar",
+const CRUMBS: Record<Step, { n: string; label: string }> = {
+  atk: { n: "1", label: "Barco" },
+  card: { n: "2", label: "Carta" },
+  target: { n: "3", label: "Objetivo" },
+  def: { n: "4", label: "Defensa" },
+  redirect: { n: "4b", label: "Redirigir" },
+  confirm: { n: "final", label: "Confirmar" },
 };
 
 export function Wizard({ game, nowMs, onClose, onDone }: {
@@ -37,25 +37,38 @@ export function Wizard({ game, nowMs, onClose, onDone }: {
   const [serverError, setServerError] = useState<string | null>(null);
 
   const step = trail[trail.length - 1];
-  const go = (s: Step) => setTrail((t) => [...t, s]);
-  const back = () => setTrail((t) => (t.length > 1 ? t.slice(0, -1) : t));
+  const go = (s: Step) => {
+    setServerError(null);
+    setTrail((t) => [...t, s]);
+  };
+  const back = () => {
+    setServerError(null);
+    setTrail((t) => (t.length > 1 ? t.slice(0, -1) : t));
+  };
 
   async function register() {
     if (!atk || !card) return;
+    setServerError(null);
     setSending(true);
+    const sabotaje = card.type === "sabotaje";
     const body = {
       attackerId: atk.id,
       cardId: card.id,
-      ...(card.type === "sabotaje" && target ? { victimId: target.id } : {}),
-      ...(defense && defense !== "no" ? { defense } : {}),
-      ...(defense === "viento" && redirect ? { redirectId: redirect.id } : {}),
+      ...(sabotaje && target ? { victimId: target.id } : {}),
+      ...(sabotaje && defense && defense !== "no" ? { defense } : {}),
+      ...(sabotaje && defense === "viento" && redirect ? { redirectId: redirect.id } : {}),
     };
-    const res = await mutate("/api/plays", "POST", body);
-    setSending(false);
-    if (res.ok) {
-      onDone();
-    } else {
-      setServerError((await res.json()).error ?? "no se pudo registrar");
+    try {
+      const res = await mutate("/api/plays", "POST", body);
+      if (res.ok) {
+        onDone();
+      } else {
+        setServerError((await res.json()).error ?? "no se pudo registrar");
+      }
+    } catch {
+      setServerError("no se pudo registrar — revisá la conexión");
+    } finally {
+      setSending(false);
     }
   }
 
@@ -72,7 +85,7 @@ export function Wizard({ game, nowMs, onClose, onDone }: {
       <div className="modal">
         <div className="inner">
           <h2>Registrar carta</h2>
-          <div className="crumb">{CRUMBS[step]}</div>
+          <div className="crumb">Paso <b>{CRUMBS[step].n}</b> · {CRUMBS[step].label}</div>
 
           {step === "atk" && (
             <>
@@ -198,7 +211,9 @@ export function Wizard({ game, nowMs, onClose, onDone }: {
             <div className="right">
               <button className="btn-ghost" onClick={onClose}>Cancelar</button>
               {step === "confirm" && (
-                <button className="btn-main" onClick={register} disabled={sending}>Registrar</button>
+                <button className="btn-main" onClick={register} disabled={sending}>
+                  {sending ? "Registrando…" : "Registrar"}
+                </button>
               )}
             </div>
           </div>
