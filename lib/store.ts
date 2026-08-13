@@ -8,7 +8,10 @@ function redisClient(): Redis | null {
   return Redis.fromEnv();
 }
 
-const memory: { game: Game | null } = { game: null };
+// En `next dev` cada route handler puede evaluar este módulo por separado, así que el
+// doc en memoria cuelga de globalThis: una sola copia para todas las rutas.
+const g = globalThis as typeof globalThis & { __gameMemory?: { game: Game | null } };
+const memory = (g.__gameMemory ??= { game: null });
 
 export async function loadGame(): Promise<Game> {
   const redis = redisClient();
