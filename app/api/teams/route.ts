@@ -3,8 +3,15 @@ import { loadGame, saveGame } from "@/lib/store";
 
 export async function POST(req: Request) {
   if (!checkPin(req)) return unauthorized();
-  const { name } = (await req.json()) as { name?: string };
-  const trimmed = typeof name === "string" ? name.trim() : "";
+
+  let body: { name?: string };
+  try {
+    body = (await req.json()) as { name?: string };
+  } catch {
+    return Response.json({ error: "cuerpo inválido" }, { status: 422 });
+  }
+
+  const trimmed = typeof body?.name === "string" ? body.name.trim() : "";
   if (!trimmed) return Response.json({ error: "nombre requerido" }, { status: 422 });
   const game = await loadGame();
   if (game.teams.some((t) => t.name === trimmed)) {

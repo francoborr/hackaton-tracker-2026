@@ -20,13 +20,27 @@ function req(body?: unknown, pin?: string): Request {
   });
 }
 
+function rawReq(body: string): Request {
+  return new Request("http://test.local/", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body,
+  });
+}
+
+function clearEnv() {
+  delete process.env.JURY_PIN;
+  delete process.env.UPSTASH_REDIS_REST_URL;
+  delete process.env.UPSTASH_REDIS_REST_TOKEN;
+}
+
 beforeEach(() => {
   resetMemory();
-  delete process.env.JURY_PIN;
+  clearEnv();
 });
 
 afterEach(() => {
-  delete process.env.JURY_PIN;
+  clearEnv();
 });
 
 describe("PIN", () => {
@@ -36,6 +50,21 @@ describe("PIN", () => {
     expect((await postSail(req(undefined, "1234"))).status).toBe(200);
     expect((await getPin(req(undefined, "9999"))).status).toBe(401);
     expect((await getPin(req(undefined, "1234"))).status).toBe(200);
+  });
+
+  it("bloquea todas las rutas de mutación sin PIN o con PIN incorrecto", async () => {
+    process.env.JURY_PIN = "1234";
+    const mutations = (pin?: string) => [
+      postPlay(req({ attackerId: "t1", cardId: "naufrago", victimId: "t2" }, pin)),
+      postTeam(req({ name: "La Perla Negra" }, pin)),
+      deleteTeam(req(undefined, pin), { params: Promise.resolve({ id: "t1" }) }),
+      deleteEffect(req(undefined, pin), { params: Promise.resolve({ id: "e1" }) }),
+      postSail(req(undefined, pin)),
+    ];
+
+    for (const res of await Promise.all(mutations())) expect(res.status).toBe(401);
+    for (const res of await Promise.all(mutations("9999"))) expect(res.status).toBe(401);
+    for (const res of await Promise.all(mutations("1234"))) expect(res.status).toBe(200);
   });
 });
 
@@ -64,6 +93,24 @@ describe("flujo de juego", () => {
   it("rechaza jugadas inválidas con 422", async () => {
     const res = await postPlay(req({ attackerId: "t1", cardId: "nope" }));
     expect(res.status).toBe(422);
+  });
+
+  it("rechaza cuerpos ausentes o que no son JSON con 422", async () => {
+    for (const res of [
+      await postPlay(req()),
+      await postPlay(rawReq("{")),
+      await postTeam(req()),
+      await postTeam(rawReq("{")),
+    ]) {
+      expect(res.status).toBe(422);
+      expect(await res.json()).toEqual({ error: "cuerpo inválido" });
+    }
+  });
+
+  it("no filtra mensajes internos cuando la jugada no es un objeto", async () => {
+    const res = await postPlay(req(null));
+    expect(res.status).toBe(422);
+    expect(await res.json()).toEqual({ error: "jugada inválida" });
   });
 
   it("rechaza equipo sin nombre o duplicado", async () => {

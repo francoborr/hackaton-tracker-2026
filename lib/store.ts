@@ -12,7 +12,10 @@ const memory: { game: Game | null } = { game: null };
 
 export async function loadGame(): Promise<Game> {
   const redis = redisClient();
-  if (redis) return (await redis.get<Game>(KEY)) ?? emptyGame();
+  if (redis) {
+    const doc = await redis.get<Partial<Game>>(KEY);
+    return { ...emptyGame(), ...doc };
+  }
   return memory.game ? structuredClone(memory.game) : emptyGame();
 }
 
