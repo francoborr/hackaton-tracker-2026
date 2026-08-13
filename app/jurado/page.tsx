@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { Board } from "@/components/Board";
 import { Creditos } from "@/components/Creditos";
 import { Fleet } from "@/components/Fleet";
 import { Masthead } from "@/components/Masthead";
 import { PinGate, usePinVerified } from "@/components/PinGate";
+import { Wizard } from "@/components/Wizard";
 import { mutate, useGame, useNowMs } from "@/lib/client";
 import { currentHour } from "@/lib/game";
 
@@ -12,6 +14,7 @@ export default function Jurado() {
   const [pinOk, markVerified] = usePinVerified();
   const { game, refresh } = useGame();
   const nowMs = useNowMs();
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   if (pinOk === null) return <Masthead />;
   if (!pinOk) {
@@ -47,6 +50,7 @@ export default function Jurado() {
               ) : (
                 <button className="btn-main" onClick={sail}>⚓ Zarpar</button>
               )}
+              <button className="btn-main" onClick={() => setWizardOpen(true)}>⚓ Registrar carta</button>
             </div>
 
             <h2>Maldiciones en curso</h2>
@@ -57,6 +61,15 @@ export default function Jurado() {
 
             <h2>La flota</h2>
             <Fleet game={game} onChange={refresh} />
+
+            {wizardOpen && (
+              <Wizard
+                game={game}
+                nowMs={nowMs}
+                onClose={() => setWizardOpen(false)}
+                onDone={() => { setWizardOpen(false); refresh(); }}
+              />
+            )}
           </>
         )}
       </main>
