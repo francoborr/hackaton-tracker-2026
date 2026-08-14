@@ -16,6 +16,8 @@ const DOMAIN_ERRORS = new Set([
   "ese barco ya no está en la flota",
   "un barco no puede atacarse a sí mismo",
   "la redirección debe ir a otro barco",
+  "el barco no tiene cartas disponibles",
+  "el barco no tiene cartas disponibles para defenderse",
 ]);
 
 export async function POST(req: Request) {
@@ -37,6 +39,10 @@ export async function POST(req: Request) {
     const message = e instanceof Error ? e.message : "";
     if (message === "conflicto de escritura") {
       return Response.json({ error: "hubo un choque de escrituras — probá de nuevo" }, { status: 409 });
+    }
+    // Que se caiga el store no es culpa de la jugada: 500 y no "jugada inválida".
+    if (message === "falta la config de Redis") {
+      return Response.json({ error: "error del servidor" }, { status: 500 });
     }
     return Response.json(
       { error: DOMAIN_ERRORS.has(message) ? message : "jugada inválida" },

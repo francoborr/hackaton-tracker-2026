@@ -35,6 +35,7 @@ export function Fleet({ game, onChange }: { game: Game; onChange: () => void }) 
     try {
       const res = await mutate(`/api/teams/${id}`, "DELETE");
       if (res.status === 401) alert("PIN inválido — recargá la página");
+      else if (!res.ok) alert("No se pudo — probá de nuevo");
     } catch {
       alert("Sin conexión — probá de nuevo");
     }

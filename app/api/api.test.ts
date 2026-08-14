@@ -77,24 +77,27 @@ describe("PIN", () => {
   });
 
   it("bloquea todas las rutas de mutación sin PIN o con PIN incorrecto", async () => {
-    // la jugada exige barcos reales: t1 es el que se borra, así que ataca t2 a t3
+    // la jugada exige barcos reales y créditos: hay que haber zarpado
     await saveGame({
       ...emptyGame(),
+      startedAt: new Date().toISOString(),
       teams: [{ id: "t1", name: "A" }, { id: "t2", name: "B" }, { id: "t3", name: "C" }],
     });
     process.env.JURY_PIN = "1234";
+    // Perezosas: con PIN válido van en orden, porque reiniciar le borra los créditos
+    // a la jugada y saldría 422 según quién gane la carrera.
     const mutations = (pin?: string) => [
-      postPlay(req({ attackerId: "t2", cardId: "naufrago", victimId: "t3" }, pin)),
-      postTeam(req({ name: "La Perla Negra" }, pin)),
-      deleteTeam(req(undefined, pin), { params: Promise.resolve({ id: "t1" }) }),
-      deleteEffect(req(undefined, pin), { params: Promise.resolve({ id: "e1" }) }),
-      postSail(req(undefined, pin)),
-      postReset(req(undefined, pin)),
+      () => postPlay(req({ attackerId: "t2", cardId: "naufrago", victimId: "t3" }, pin)),
+      () => postTeam(req({ name: "La Perla Negra" }, pin)),
+      () => deleteTeam(req(undefined, pin), { params: Promise.resolve({ id: "t1" }) }),
+      () => deleteEffect(req(undefined, pin), { params: Promise.resolve({ id: "e1" }) }),
+      () => postSail(req(undefined, pin)),
+      () => postReset(req(undefined, pin)),
     ];
 
-    for (const res of await Promise.all(mutations())) expect(res.status).toBe(401);
-    for (const res of await Promise.all(mutations("9999"))) expect(res.status).toBe(401);
-    for (const res of await Promise.all(mutations("1234"))) expect(res.status).toBe(200);
+    for (const call of mutations()) expect((await call()).status).toBe(401);
+    for (const call of mutations("9999")) expect((await call()).status).toBe(401);
+    for (const call of mutations("1234")) expect((await call()).status).toBe(200);
   });
 });
 
@@ -120,6 +123,29 @@ describe("flujo de juego", () => {
     expect(game.usages).toHaveLength(1); // terminar no devuelve el crédito
   });
 
+  it("rechaza con 422 la jugada de un barco sin cartas, sin importar el PIN", async () => {
+    await postSail(req());
+    await postTeam(req({ name: "A" }));
+    await postTeam(req({ name: "B" }));
+    const { teams } = await (await getState()).json();
+    const [a, b] = teams;
+
+    // hora 1: A tiene una sola carta
+    expect((await postPlay(req({ attackerId: a.id, cardId: "naufrago", victimId: b.id }))).status).toBe(200);
+    const res = await postPlay(req({ attackerId: a.id, cardId: "senal-de-humo" }));
+    expect(res.status).toBe(422);
+    expect(await res.json()).toEqual({ error: "el barco no tiene cartas disponibles" });
+
+    // y tampoco puede defenderse
+    const conDefensa = await postPlay(
+      req({ attackerId: b.id, cardId: "mano-de-garfio", victimId: a.id, defense: "casco" }),
+    );
+    expect(conDefensa.status).toBe(422);
+    expect(await conDefensa.json()).toEqual({
+      error: "el barco no tiene cartas disponibles para defenderse",
+    });
+  });
+
   it("rechaza jugadas inválidas con 422", async () => {
     const res = await postPlay(req({ attackerId: "t1", cardId: "nope" }));
     expect(res.status).toBe(422);
@@ -137,6 +163,22 @@ describe("flujo de juego", () => {
     }
   });
 
+  // Una falla de infra no puede disfrazarse de jugada rechazada: el jurado buscaría el
+  // error en la carta que eligió.
+  it("una falla del store sale como 500, no como jugada inválida", async () => {
+    await postTeam(req({ name: "A" }));
+    await postTeam(req({ name: "B" }));
+    const { teams } = await (await getState()).json();
+    process.env.JURY_PIN = "1234";
+    vi.stubEnv("NODE_ENV", "production"); // sin config de Redis: loadGame explota
+
+    const res = await postPlay(
+      req({ attackerId: teams[0].id, cardId: "naufrago", victimId: teams[1].id }, "1234"),
+    );
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ error: "error del servidor" });
+  });
+
   it("no filtra mensajes internos cuando la jugada no es un objeto", async () => {
     const res = await postPlay(req(null));
     expect(res.status).toBe(422);
@@ -150,6 +192,7 @@ describe("flujo de juego", () => {
   });
 
   it("borrar equipo elimina las maldiciones que sufre pero no las que lanzó", async () => {
+    await postSail(req());
     await postTeam(req({ name: "A" }));
     await postTeam(req({ name: "B" }));
     await postTeam(req({ name: "C" }));

@@ -86,14 +86,18 @@ export function Wizard({ game, nowMs, onClose, onDone }: {
   }
 
   const now = new Date(nowMs);
+  // Mismo criterio que el server: todo lo que no sea bendición maldice, incluso una carta
+  // que ya no esté en el mazo (si no, el chip queda habilitado y el registro sale 422).
   const isCursed = (teamId: string) =>
     game.effects.some((e) =>
       e.victimId === teamId &&
-      CARDS.find((c) => c.id === e.cardId)?.type === "sabotaje" &&
+      CARDS.find((c) => c.id === e.cardId)?.type !== "ayuda" &&
       new Date(e.endsAt).getTime() > nowMs
     );
   const ayudaBusy = (cardId: string) =>
     game.effects.some((e) => e.cardId === cardId && new Date(e.endsAt).getTime() > nowMs);
+  // Sin crédito no se juega nada: ni atacar, ni bendecirse, ni defenderse.
+  const broke = (teamId: string) => credits(game, teamId, now) <= 0;
   const finalVictim = defense === "viento" ? redirect : target;
   // Qué barco es el que ya está maldito, para poder nombrarlo en el aviso.
   const cursedShip =
@@ -106,6 +110,7 @@ export function Wizard({ game, nowMs, onClose, onDone }: {
   // Con viento la maldición se va a otro barco: si no queda ninguno libre, no hay
   // adónde redirigir.
   const redirectables = game.teams.filter((t) => t.id !== target?.id && !isCursed(t.id));
+  const rivals = game.teams.filter((t) => t.id !== atk?.id);
 
   return (
     <div className="overlay open">
@@ -119,11 +124,22 @@ export function Wizard({ game, nowMs, onClose, onDone }: {
               <div className="wizq">¿Qué barco juega la carta?</div>
               <div className="chips">
                 {game.teams.map((t) => (
-                  <button key={t.id} className="chip" onClick={() => { setAtk(t); go("card"); }}>
-                    {t.name}
+                  <button
+                    key={t.id}
+                    className="chip"
+                    disabled={broke(t.id)}
+                    onClick={() => { setAtk(t); go("card"); }}
+                  >
+                    {t.name} {broke(t.id) && <small>⚓ sin cartas</small>}
                   </button>
                 ))}
               </div>
+              {game.teams.length > 0 && game.teams.every((t) => broke(t.id)) && (
+                <p className="hintline">
+                  Ningún barco tiene cartas disponibles
+                  {game.startedAt ? " — esperá a la próxima hora." : " — todavía no zarparon."}
+                </p>
+              )}
             </>
           )}
 
@@ -172,7 +188,7 @@ export function Wizard({ game, nowMs, onClose, onDone }: {
             <>
               <div className="wizq">¿Contra qué barco?</div>
               <div className="chips">
-                {game.teams.filter((t) => t.id !== atk?.id).map((t) => (
+                {rivals.map((t) => (
                   <button
                     key={t.id}
                     className="chip"
@@ -183,12 +199,14 @@ export function Wizard({ game, nowMs, onClose, onDone }: {
                   </button>
                 ))}
               </div>
-              {game.teams.filter((t) => t.id !== atk?.id).every((t) => isCursed(t.id)) && (
+              {rivals.length === 0 ? (
+                <p className="hintline">No hay otros barcos en la flota.</p>
+              ) : rivals.every((t) => isCursed(t.id)) ? (
                 <p className="hintline">
                   No hay barcos libres para atacar — esperá a que expire una maldición o
                   terminala con la ✕.
                 </p>
-              )}
+              ) : null}
             </>
           )}
 
@@ -199,7 +217,9 @@ export function Wizard({ game, nowMs, onClose, onDone }: {
                 {DEFENSES.map((d) => {
                   const krakenBlocked = d.key === "kraken" && atk !== null && isCursed(atk.id);
                   const vientoBlocked = d.key === "viento" && redirectables.length === 0;
-                  const blocked = krakenBlocked || vientoBlocked;
+                  // Defenderse gasta una carta: sin crédito, la única opción es "No".
+                  const brokeBlocked = d.key !== "no" && target !== null && broke(target.id);
+                  const blocked = krakenBlocked || vientoBlocked || brokeBlocked;
                   return (
                     <button
                       key={d.key}
@@ -213,7 +233,8 @@ export function Wizard({ game, nowMs, onClose, onDone }: {
                       {d.name}{" "}
                       {d.hint && (
                         <small>
-                          {krakenBlocked ? "☠ atacante maldito"
+                          {brokeBlocked ? "⚓ sin cartas"
+                            : krakenBlocked ? "☠ atacante maldito"
                             : vientoBlocked ? "☠ sin barcos libres"
                             : d.hint}
                         </small>
@@ -262,12 +283,11 @@ export function Wizard({ game, nowMs, onClose, onDone }: {
                   </>
                 )}
               </div>
-              {credits(game, atk.id, now) <= 0 && (
-                <div className="warn">⚠ {atk.name} no tiene cartas disponibles esta hora — podés registrar igual si el jurado lo avala.</div>
+              {broke(atk.id) && (
+                <div className="warn">⚓ {atk.name} no tiene cartas disponibles — no puede jugar hasta la próxima hora.</div>
               )}
-              {card.type === "sabotaje" && defense && defense !== "no" && target &&
-                credits(game, target.id, now) <= 0 && (
-                <div className="warn">⚠ {target.name} no tiene cartas disponibles para la defensa — podés registrar igual si el jurado lo avala.</div>
+              {card.type === "sabotaje" && defense && defense !== "no" && target && broke(target.id) && (
+                <div className="warn">⚓ {target.name} no tiene cartas disponibles — no puede defenderse.</div>
               )}
               {card.type === "ayuda" && ayudaBusy(card.id) && (
                 <div className="warn">⏳ {card.name} ya está en uso — esperá a que termine esa bendición.</div>
@@ -293,7 +313,13 @@ export function Wizard({ game, nowMs, onClose, onDone }: {
                 <button
                   className="btn-main"
                   onClick={register}
-                  disabled={sending || victimCursed || (card?.type === "ayuda" && ayudaBusy(card.id))}
+                  disabled={
+                    sending ||
+                    victimCursed ||
+                    (card?.type === "ayuda" && ayudaBusy(card.id)) ||
+                    (atk !== null && broke(atk.id)) ||
+                    (defense !== null && defense !== "no" && target !== null && broke(target.id))
+                  }
                 >
                   {sending ? "Registrando…" : "Registrar"}
                 </button>

@@ -35,6 +35,7 @@ export default function Jurado() {
     try {
       const res = await mutate(`/api/effects/${id}`, "DELETE");
       if (res.status === 401) alert("PIN inválido — recargá la página");
+      else if (!res.ok) alert("No se pudo — probá de nuevo");
     } catch {
       alert("Sin conexión — probá de nuevo");
     }
@@ -45,6 +46,7 @@ export default function Jurado() {
     try {
       const res = await mutate("/api/sail", "POST");
       if (res.status === 401) alert("PIN inválido — recargá la página");
+      else if (!res.ok) alert("No se pudo — probá de nuevo");
     } catch {
       alert("Sin conexión — probá de nuevo");
     }
@@ -56,7 +58,8 @@ export default function Jurado() {
     try {
       const res = await mutate("/api/advance-hour", "POST");
       if (res.status === 401) alert("PIN inválido — recargá la página");
-      if (res.status === 422) alert("Todavía no zarparon — no hay hora que adelantar");
+      else if (res.status === 422) alert("Todavía no zarparon — no hay hora que adelantar");
+      else if (!res.ok) alert("No se pudo — probá de nuevo");
     } catch {
       alert("Sin conexión — probá de nuevo");
     }
@@ -67,6 +70,7 @@ export default function Jurado() {
     try {
       const res = await mutate("/api/reset", "POST");
       if (res.status === 401) alert("PIN inválido — recargá la página");
+      else if (!res.ok) alert("No se pudo — probá de nuevo");
     } catch {
       alert("Sin conexión — probá de nuevo");
     }

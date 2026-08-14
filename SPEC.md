@@ -35,10 +35,12 @@ Secciones (ver mockup):
 
 - **Crédito horario**: cada equipo habilita 1 carta por hora de evento. `disponibles(equipo) =
   horas_transcurridas + bonus(equipo) − cartas_usadas(equipo)`. El reloj corre continuo desde el
-  inicio (el almuerzo no pausa). La app **avisa pero no bloquea** si un equipo sin crédito juega
-  una carta (override del jurado, siempre).
+  inicio (el almuerzo no pausa). **Bloqueo duro, sin override**: sin crédito un barco no puede
+  atacar, ni bendecirse, ni defenderse — el server rechaza la jugada (422) y el wizard
+  deshabilita el barco como atacante y sus defensas como víctima. Antes de zarpar nadie tiene
+  cartas, así que no se puede registrar nada.
 - **Una maldición por víctima**: un equipo no puede estar sufriendo más de un efecto a la vez.
-  **Bloqueo duro, sin override** (a diferencia del crédito): el server rechaza la jugada (422) y
+  **Bloqueo duro, sin override**: el server rechaza la jugada (422) y
   el wizard deshabilita los barcos malditos como objetivo/redirección (y el Kraken si el
   atacante está maldito). Para desbloquear: esperar a que expire o terminarla con la ✕. Del lado
   del que juega no hay límite: un equipo puede tener varias jugadas activas si acumuló créditos.
@@ -94,8 +96,8 @@ Un paso por pantalla, seleccionar avanza, "← Atrás" siempre disponible:
 2. **Carta**: sabotaje o ayuda (una sola). Ayuda → salta a confirmar.
 3. **Objetivo**: contra qué barco (excluye al atacante).
 4. **Defensa**: No / Casco / Viento / Kraken / Botín. Viento agrega el paso 4b (elegir redirigido).
-5. **Confirmar**: resumen en prosa de lo que va a pasar + warnings (atacante sin crédito, víctima
-   ya maldita). Botón "Registrar" recién acá.
+5. **Confirmar**: resumen en prosa de lo que va a pasar + los bloqueos que apliquen (sin
+   crédito, víctima ya maldita, ayuda en uso), que deshabilitan "Registrar". Botón recién acá.
 
 ## Correcciones
 

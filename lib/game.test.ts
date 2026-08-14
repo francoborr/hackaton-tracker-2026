@@ -163,6 +163,46 @@ describe("resolvePlay", () => {
     ).toThrow("defensa inválida");
   });
 
+  it("rechaza jugar sin cartas disponibles", () => {
+    const g = baseGame();
+    // 3 horas de travesía, 3 usos: t1 se queda sin cartas
+    for (const n of [1, 2, 3]) {
+      g.usages.push({ id: `u${n}`, teamId: "t1", cardId: "naufrago", at: "x" });
+    }
+    expect(() => resolvePlay(g, { attackerId: "t1", cardId: "naufrago", victimId: "t2" }, NOW, seq()))
+      .toThrow("no tiene cartas disponibles");
+    expect(() => resolvePlay(g, { attackerId: "t1", cardId: "senal-de-humo" }, NOW, seq()))
+      .toThrow("no tiene cartas disponibles");
+    // el resto de la flota sigue pudiendo jugar
+    expect(resolvePlay(g, { attackerId: "t2", cardId: "naufrago", victimId: "t1" }, NOW, seq()).effects)
+      .toHaveLength(1);
+  });
+
+  it("rechaza defenderse sin cartas disponibles", () => {
+    const g = baseGame();
+    for (const n of [1, 2, 3]) {
+      g.usages.push({ id: `u${n}`, teamId: "t1", cardId: "naufrago", at: "x" });
+    }
+    expect(() => resolvePlay(
+      g,
+      { attackerId: "t2", cardId: "naufrago", victimId: "t1", defense: "casco" },
+      NOW, seq(),
+    )).toThrow("no tiene cartas disponibles para defenderse");
+    // sin defensa el ataque sí entra
+    expect(resolvePlay(g, { attackerId: "t2", cardId: "naufrago", victimId: "t1" }, NOW, seq()).effects)
+      .toHaveLength(1);
+  });
+
+  it("el bonus del botín habilita a jugar de nuevo", () => {
+    const g = baseGame();
+    for (const n of [1, 2, 3]) {
+      g.usages.push({ id: `u${n}`, teamId: "t1", cardId: "naufrago", at: "x" });
+    }
+    g.bonus["t1"] = 1;
+    expect(resolvePlay(g, { attackerId: "t1", cardId: "naufrago", victimId: "t2" }, NOW, seq()).effects)
+      .toHaveLength(1);
+  });
+
   it("rechaza sabotear a un barco que ya está maldito", () => {
     const g = baseGame();
     g.effects.push({ id: "e1", cardId: "naufrago", attackerId: "t3", victimId: "t1", endsAt: "2026-09-07T14:05:00Z" });
