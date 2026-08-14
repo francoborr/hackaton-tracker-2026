@@ -26,8 +26,9 @@ variables de Upstash son obligatorias en producción.
 1. Importar el repo en Vercel.
 2. En el marketplace de Vercel agregar **Upstash Redis** al proyecto — inyecta
    `UPSTASH_REDIS_REST_URL` y `UPSTASH_REDIS_REST_TOKEN`.
-3. Agregar la env var `JURY_PIN` (el PIN compartido del jurado). Sin `JURY_PIN` las
-   mutaciones quedan abiertas al público — no falla, simplemente no pide PIN.
+3. Agregar la env var `JURY_PIN` (el PIN compartido del jurado). Es obligatoria: en
+   producción, sin `JURY_PIN` toda mutación se rechaza con 401. La apertura sin PIN
+   existe solo para desarrollo local.
 4. Deploy. `/` es el tablero público, `/jurado` la vista del jurado.
 
 ## Tests

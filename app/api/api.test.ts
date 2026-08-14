@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { resetMemory, loadGame, saveGame } from "@/lib/store";
 import { emptyGame } from "@/lib/game";
 import { GET as getState } from "@/app/api/state/route";
@@ -41,6 +41,7 @@ beforeEach(() => {
 
 afterEach(() => {
   clearEnv();
+  vi.unstubAllEnvs();
 });
 
 describe("PIN", () => {
@@ -50,6 +51,14 @@ describe("PIN", () => {
     expect((await postSail(req(undefined, "1234"))).status).toBe(200);
     expect((await getPin(req(undefined, "9999"))).status).toBe(401);
     expect((await getPin(req(undefined, "1234"))).status).toBe(200);
+  });
+
+  it("sin JURY_PIN bloquea en producción y deja abierto en desarrollo", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    expect((await postSail(req())).status).toBe(401);
+
+    vi.unstubAllEnvs(); // vuelve a NODE_ENV=test
+    expect((await postSail(req())).status).toBe(200);
   });
 
   it("bloquea todas las rutas de mutación sin PIN o con PIN incorrecto", async () => {

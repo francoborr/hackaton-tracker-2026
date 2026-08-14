@@ -1,6 +1,6 @@
 export function checkPin(req: Request): boolean {
   const pin = process.env.JURY_PIN;
-  if (!pin) return true;
+  if (!pin) return process.env.NODE_ENV !== "production";
   return req.headers.get("x-jury-pin") === pin;
 }
 

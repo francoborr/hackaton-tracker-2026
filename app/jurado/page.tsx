@@ -27,14 +27,22 @@ export default function Jurado() {
   }
 
   async function endEffect(id: string) {
-    const res = await mutate(`/api/effects/${id}`, "DELETE");
-    if (res.status === 401) alert("PIN inválido — recargá la página");
+    try {
+      const res = await mutate(`/api/effects/${id}`, "DELETE");
+      if (res.status === 401) alert("PIN inválido — recargá la página");
+    } catch {
+      alert("Sin conexión — probá de nuevo");
+    }
     refresh();
   }
 
   async function sail() {
-    const res = await mutate("/api/sail", "POST");
-    if (res.status === 401) alert("PIN inválido — recargá la página");
+    try {
+      const res = await mutate("/api/sail", "POST");
+      if (res.status === 401) alert("PIN inválido — recargá la página");
+    } catch {
+      alert("Sin conexión — probá de nuevo");
+    }
     refresh();
   }
 
