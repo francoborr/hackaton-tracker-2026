@@ -1,5 +1,6 @@
 import { resolvePlay, type PlayInput } from "@/lib/game";
 import { checkPin, unauthorized } from "@/lib/pin";
+import { notifySlack, playMessage } from "@/lib/slack";
 import { updateGame } from "@/lib/store";
 
 // Los únicos mensajes de resolvePlay que se le muestran al jurado; cualquier otra
@@ -30,11 +31,12 @@ export async function POST(req: Request) {
     return Response.json({ error: "cuerpo inválido" }, { status: 422 });
   }
 
+  const now = new Date();
+  let next;
   try {
-    const next = await updateGame((game) =>
-      resolvePlay(game, input, new Date(), () => crypto.randomUUID()),
+    next = await updateGame((game) =>
+      resolvePlay(game, input, now, () => crypto.randomUUID()),
     );
-    return Response.json(next);
   } catch (e) {
     const message = e instanceof Error ? e.message : "";
     if (message === "conflicto de escritura") {
@@ -49,4 +51,14 @@ export async function POST(req: Request) {
       { status: 422 },
     );
   }
+
+  // La jugada ya está guardada: el aviso sale una sola vez (updateGame puede reintentar
+  // por concurrencia) y va aparte, para que ninguna falla suya vuelva 422 algo que sí pasó.
+  try {
+    await notifySlack(playMessage(next, input, now, new URL(req.url).origin));
+  } catch (e) {
+    console.warn("no se pudo armar el aviso de slack:", e);
+  }
+
+  return Response.json(next);
 }

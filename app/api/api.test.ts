@@ -146,6 +146,47 @@ describe("flujo de juego", () => {
     });
   });
 
+  it("avisa por Slack la jugada registrada", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response("ok"));
+    vi.stubGlobal("fetch", fetchMock);
+    process.env.SLACK_WEBHOOK_URL = "https://hooks.slack.test/abc";
+    await postSail(req());
+    await postTeam(req({ name: "Barbanegra" }));
+    await postTeam(req({ name: "La Perla Negra" }));
+    const { teams } = await (await getState()).json();
+
+    const res = await postPlay(
+      req({ attackerId: teams[0].id, cardId: "naufrago", victimId: teams[1].id }),
+    );
+    expect(res.status).toBe(200);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body.text).toContain("Barbanegra");
+    expect(body.blocks[0].text.text).toBe("⚔️ Sabotaje jugado");
+
+    vi.unstubAllGlobals();
+    delete process.env.SLACK_WEBHOOK_URL;
+  });
+
+  // El aviso es accesorio: si Slack falla, la jugada tiene que quedar igual.
+  it("registra la jugada aunque Slack falle", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("sin red")));
+    process.env.SLACK_WEBHOOK_URL = "https://hooks.slack.test/abc";
+    await postSail(req());
+    await postTeam(req({ name: "A" }));
+    await postTeam(req({ name: "B" }));
+    const { teams } = await (await getState()).json();
+
+    const res = await postPlay(
+      req({ attackerId: teams[0].id, cardId: "naufrago", victimId: teams[1].id }),
+    );
+    expect(res.status).toBe(200);
+    expect((await (await getState()).json()).effects).toHaveLength(1);
+
+    vi.unstubAllGlobals();
+    delete process.env.SLACK_WEBHOOK_URL;
+  });
+
   it("rechaza jugadas inválidas con 422", async () => {
     const res = await postPlay(req({ attackerId: "t1", cardId: "nope" }));
     expect(res.status).toBe(422);

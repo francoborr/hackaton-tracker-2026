@@ -153,6 +153,20 @@ Mutaciones con header `x-jury-pin` validado contra `JURY_PIN`; lecturas pública
   sufría, sus usos y su bonus; no toca las que lanzó).
 - `POST /api/sail` → fija `startedAt`.
 
+## Avisos por Slack
+
+Cada jugada registrada se anuncia en un canal de Slack vía Incoming Webhook
+(`SLACK_WEBHOOK_URL`, opcional: sin la variable no se manda nada). El mensaje lo arma
+`lib/slack.ts` con Block Kit: header según lo que pasó (jugado / bloqueado / redirigido /
+espejado / con botín / ayuda), los datos en dos columnas, el arte de la carta como
+miniatura (`<origen>/cards/<id>.jpg`) y un contexto con el link al tablero y la hora de fin
+(formateada por Slack en el huso de cada uno).
+
+Reglas: el aviso sale **después** de que la jugada se guardó, fuera del reintento de
+concurrencia, así nunca se duplica ni se manda por una jugada que falló; y cualquier error
+—red, timeout de 3 s, 4xx de Slack— se traga: la jugada ya está registrada y el jurado
+recibe su 200 igual.
+
 Concurrencia: 5 escritores, tráfico mínimo, pero el doc entero se reescribe en cada mutación:
 va con **compare-and-set** sobre un campo `rev` (Lua en Redis, comparación directa en memoria).
 Si otro jurado escribió en el medio, la mutación se reintenta sobre el doc nuevo (hasta 5

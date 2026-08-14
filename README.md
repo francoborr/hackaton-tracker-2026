@@ -32,6 +32,21 @@ variables de Upstash son obligatorias en producción.
    existe solo para desarrollo local.
 4. Deploy. `/` es el tablero público, `/jurado` la vista del jurado.
 
+## Avisos por Slack (opcional)
+
+Cada carta registrada se anuncia en un canal de Slack, con el arte de la carta y el link
+al tablero. Para prenderlo:
+
+1. En [api.slack.com/apps](https://api.slack.com/apps) → tu app → **Incoming Webhooks** →
+   *Add New Webhook to Workspace* → elegir el canal. Slack devuelve una URL
+   `https://hooks.slack.com/services/...`.
+2. Cargarla en Vercel como `SLACK_WEBHOOK_URL` y **redeployar** (las env vars se toman
+   recién en el deploy siguiente).
+
+El día del evento alcanza con crear el canal, generar el webhook y repetir el paso 2; se
+puede probar antes apuntando a un canal privado. Sin la variable la app no manda nada, y
+si Slack falla o tarda la jugada se registra igual — el aviso nunca bloquea al jurado.
+
 ## Tests
 
 ```bash
