@@ -7,12 +7,12 @@ import { mutate } from "@/lib/client";
 
 type Step = "atk" | "card" | "target" | "def" | "redirect" | "confirm";
 
-const DEFENSES: { key: Defense | "no"; name: string; hint?: string }[] = [
+const DEFENSES: { key: Defense | "no"; name: string; hint?: string; desc?: string }[] = [
   { key: "no", name: "No" },
-  { key: "casco", name: "Casco blindado", hint: "bloquea" },
-  { key: "viento", name: "Viento en contra", hint: "redirige" },
-  { key: "kraken", name: "Maldición del Kraken", hint: "a ambos" },
-  { key: "botin", name: "Botín de repuesto", hint: "sufre +1 ayuda" },
+  { key: "casco", name: "Casco blindado", hint: "bloquea", desc: "Bloquea el sabotaje: ambas cartas se gastan y no pasa nada." },
+  { key: "viento", name: "Viento en contra", hint: "redirige", desc: "Redirige la maldición hacia otro barco que elige el defensor." },
+  { key: "kraken", name: "Maldición del Kraken", hint: "a ambos", desc: "La maldición aplica a ambos: víctima y atacante a la vez." },
+  { key: "botin", name: "Botín de repuesto", hint: "sufre +1 ayuda", desc: "Sufre la maldición igual, pero gana una carta de ayuda de compensación." },
 ];
 
 const CRUMBS: Record<Step, { n: string; label: string }> = {
@@ -23,6 +23,29 @@ const CRUMBS: Record<Step, { n: string; label: string }> = {
   redirect: { n: "4b", label: "Redirigir" },
   confirm: { n: "final", label: "Confirmar" },
 };
+
+// El "?" abre un popover sin disparar la selección del chip que lo contiene.
+function Qmark({ id, open, setOpen, title, body }: {
+  id: string; open: string | null; setOpen: (v: string | null) => void; title: string; body: string;
+}) {
+  return (
+    <>
+      <span
+        role="button"
+        className="qmark"
+        onMouseEnter={() => setOpen(id)}
+        onMouseLeave={() => setOpen(null)}
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen(open === id ? null : id);
+        }}
+      >
+        ?
+      </span>
+      {open === id && <span className="pop"><b>{title}</b>{body}</span>}
+    </>
+  );
+}
 
 export function Wizard({ game, nowMs, onClose, onDone }: {
   game: Game; nowMs: number; onClose: () => void; onDone: () => void;
@@ -35,14 +58,17 @@ export function Wizard({ game, nowMs, onClose, onDone }: {
   const [redirect, setRedirect] = useState<Team | null>(null);
   const [sending, setSending] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [pop, setPop] = useState<string | null>(null);
 
   const step = trail[trail.length - 1];
   const go = (s: Step) => {
     setServerError(null);
+    setPop(null);
     setTrail((t) => [...t, s]);
   };
   const back = () => {
     setServerError(null);
+    setPop(null);
     setTrail((t) => (t.length > 1 ? t.slice(0, -1) : t));
   };
 
@@ -109,6 +135,13 @@ export function Wizard({ game, nowMs, onClose, onDone }: {
                   {CARDS.filter((c) => c.type === "sabotaje").map((c) => (
                     <button key={c.id} className="chip" onClick={() => { setCard(c); go("target"); }}>
                       {c.name} <small>{c.minutes} min</small>
+                      <Qmark
+                        id={c.id}
+                        open={pop}
+                        setOpen={setPop}
+                        title={c.name}
+                        body={`${c.effect}${c.minutes ? ` · dura ${c.minutes} min` : ""}`}
+                      />
                     </button>
                   ))}
                 </div>
@@ -119,6 +152,13 @@ export function Wizard({ game, nowMs, onClose, onDone }: {
                   {CARDS.filter((c) => c.type === "ayuda").map((c) => (
                     <button key={c.id} className="chip" onClick={() => { setCard(c); go("confirm"); }}>
                       {c.name}
+                      <Qmark
+                        id={c.id}
+                        open={pop}
+                        setOpen={setPop}
+                        title={c.name}
+                        body={`${c.effect}${c.minutes ? ` · dura ${c.minutes} min` : ""}`}
+                      />
                     </button>
                   ))}
                 </div>
@@ -153,6 +193,9 @@ export function Wizard({ game, nowMs, onClose, onDone }: {
                     }}
                   >
                     {d.name} {d.hint && <small>{d.hint}</small>}
+                    {d.desc && (
+                      <Qmark id={d.key} open={pop} setOpen={setPop} title={d.name} body={d.desc} />
+                    )}
                   </button>
                 ))}
               </div>

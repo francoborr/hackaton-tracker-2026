@@ -416,3 +416,91 @@ h2 {
   cursor: pointer;
 }
 .btn-ghost:hover { color: var(--parch); }
+
+/* ============ reset travesía ============ */
+.btn-danger {
+  font-family: var(--display);
+  font-variant: small-caps;
+  letter-spacing: .1em;
+  background: none;
+  border: 1px solid rgba(224, 102, 42, .5);
+  color: var(--ember-hi);
+  padding: .55rem 1.1rem;
+  cursor: pointer;
+}
+.btn-danger:hover { background: rgba(224, 102, 42, .12); }
+.danger-zone {
+  margin-top: 5rem;
+  padding-top: 1.5rem;
+  border-top: 1px dashed rgba(224, 102, 42, .3);
+  text-align: center;
+}
+.reset-body {
+  font-size: .92rem;
+  line-height: 1.7;
+  text-align: center;
+  color: var(--parch);
+}
+.reset-body ul {
+  list-style: none;
+  margin: .8rem 0;
+  padding: 0;
+  color: var(--parch-dim);
+  font-size: .85rem;
+}
+.reset-body .keeps { color: var(--ayuda-hi); }
+
+/* ============ popover "?" en cartas ============ */
+.chip { position: relative; }
+.qmark {
+  display: inline-block;
+  width: 1.05rem;
+  height: 1.05rem;
+  line-height: 1rem;
+  margin-left: .35rem;
+  border: 1px solid var(--frame);
+  border-radius: 50%;
+  background: rgba(0,0,0,.3);
+  color: var(--parch-dim);
+  font-size: .62rem;
+  font-family: var(--display);
+  text-align: center;
+  cursor: help;
+  vertical-align: 1px;
+}
+.qmark:hover { color: var(--gold); border-color: var(--gold); }
+.pop {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  width: max-content;
+  max-width: 230px;
+  background: var(--panel-2);
+  border: 1px solid var(--frame-hi);
+  box-shadow: 0 8px 24px rgba(0,0,0,.7);
+  padding: .5rem .7rem;
+  font-size: .74rem;
+  line-height: 1.5;
+  color: var(--parch);
+  text-align: center;
+  pointer-events: none;
+}
+.pop b {
+  display: block;
+  font-family: var(--display);
+  font-variant: small-caps;
+  font-weight: 400;
+  color: var(--gold);
+  font-size: .82rem;
+}
+.pop::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--frame-hi);
+}

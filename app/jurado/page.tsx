@@ -15,6 +15,7 @@ export default function Jurado() {
   const { game, refresh } = useGame();
   const nowMs = useNowMs();
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [resetOpen, setResetOpen] = useState(false);
 
   if (pinOk === null) return <Masthead />;
   if (!pinOk) {
@@ -46,6 +47,17 @@ export default function Jurado() {
     refresh();
   }
 
+  async function reset() {
+    try {
+      const res = await mutate("/api/reset", "POST");
+      if (res.status === 401) alert("PIN inválido — recargá la página");
+    } catch {
+      alert("Sin conexión — probá de nuevo");
+    }
+    setResetOpen(false);
+    refresh();
+  }
+
   return (
     <>
       <Masthead />
@@ -69,6 +81,38 @@ export default function Jurado() {
 
             <h2>La flota</h2>
             <Fleet game={game} onChange={refresh} />
+
+            <div className="danger-zone">
+              <button className="btn-danger" onClick={() => setResetOpen(true)}>↺ Reiniciar la travesía</button>
+              <p className="hintline">Vuelve el juego al estado previo al zarpe. Pide confirmación.</p>
+            </div>
+
+            {resetOpen && (
+              <div className="overlay open">
+                <div className="modal">
+                  <div className="inner">
+                    <h2>¿Reiniciar la travesía?</h2>
+                    <div className="reset-body">
+                      Esto vuelve el juego al estado previo al zarpe:
+                      <ul>
+                        <li>✕ Se borra la hora de zarpe</li>
+                        <li>✕ Se borran todas las maldiciones en curso</li>
+                        <li>✕ Se borran los usos de cartas y créditos</li>
+                        <li className="keeps">✓ La flota (los barcos) se mantiene</li>
+                      </ul>
+                      No se puede deshacer.
+                    </div>
+                    <div className="modal-actions">
+                      <span></span>
+                      <div className="right">
+                        <button className="btn-ghost" onClick={() => setResetOpen(false)}>Cancelar</button>
+                        <button className="btn-danger" onClick={reset}>↺ Sí, reiniciar</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {wizardOpen && (
               <Wizard

@@ -7,6 +7,7 @@ import { DELETE as deleteEffect } from "@/app/api/effects/[id]/route";
 import { POST as postTeam } from "@/app/api/teams/route";
 import { DELETE as deleteTeam } from "@/app/api/teams/[id]/route";
 import { POST as postSail } from "@/app/api/sail/route";
+import { POST as postReset } from "@/app/api/reset/route";
 import { GET as getPin } from "@/app/api/pin/route";
 
 function req(body?: unknown, pin?: string): Request {
@@ -71,6 +72,7 @@ describe("PIN", () => {
       deleteTeam(req(undefined, pin), { params: Promise.resolve({ id: "t1" }) }),
       deleteEffect(req(undefined, pin), { params: Promise.resolve({ id: "e1" }) }),
       postSail(req(undefined, pin)),
+      postReset(req(undefined, pin)),
     ];
 
     for (const res of await Promise.all(mutations())) expect(res.status).toBe(401);
@@ -159,5 +161,30 @@ describe("flujo de juego", () => {
     const first = (await loadGame()).startedAt;
     await postSail(req());
     expect((await loadGame()).startedAt).toBe(first);
+  });
+
+  it("reiniciar vuelve al estado previo al zarpe y conserva la flota", async () => {
+    await postTeam(req({ name: "La Perla Negra" }));
+    await postTeam(req({ name: "Barbanegra" }));
+    await postSail(req());
+    let game = await (await getState()).json();
+    const [t1, t2] = game.teams;
+    await postPlay(req({ attackerId: t2.id, cardId: "naufrago", victimId: t1.id, defense: "botin" }));
+
+    game = await (await getState()).json();
+    expect(game.effects.length).toBeGreaterThan(0);
+    expect(game.usages.length).toBeGreaterThan(0);
+    expect(Object.keys(game.bonus).length).toBeGreaterThan(0);
+
+    const res = await postReset(req());
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ startedAt: null, effects: [], usages: [], bonus: {} });
+
+    game = await loadGame();
+    expect(game.teams.map((t: { name: string }) => t.name)).toEqual(["La Perla Negra", "Barbanegra"]);
+    expect(game.startedAt).toBeNull();
+    expect(game.effects).toEqual([]);
+    expect(game.usages).toEqual([]);
+    expect(game.bonus).toEqual({});
   });
 });
