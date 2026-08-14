@@ -1,6 +1,6 @@
 import { resolvePlay, type PlayInput } from "@/lib/game";
 import { checkPin, unauthorized } from "@/lib/pin";
-import { notifySlack, playMessage } from "@/lib/slack";
+import { notifySlack, playMessage, publicBaseUrl } from "@/lib/slack";
 import { updateGame } from "@/lib/store";
 
 // Los únicos mensajes de resolvePlay que se le muestran al jurado; cualquier otra
@@ -55,7 +55,7 @@ export async function POST(req: Request) {
   // La jugada ya está guardada: el aviso sale una sola vez (updateGame puede reintentar
   // por concurrencia) y va aparte, para que ninguna falla suya vuelva 422 algo que sí pasó.
   try {
-    await notifySlack(playMessage(next, input, now, new URL(req.url).origin));
+    await notifySlack(playMessage(next, input, now, publicBaseUrl(req)));
   } catch (e) {
     console.warn("no se pudo armar el aviso de slack:", e);
   }

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { emptyGame, type Game } from "./game";
-import { notifySlack, playMessage } from "./slack";
+import { notifySlack, playMessage, publicBaseUrl } from "./slack";
 
 const NOW = new Date("2026-09-07T14:21:00Z");
 const URL_BASE = "https://tracker.test";
@@ -136,6 +136,32 @@ describe("playMessage", () => {
       game(), { attackerId: "fantasma", cardId: "naufrago", victimId: "t2" }, NOW, URL_BASE,
     );
     expect(fields(blocks).Atacante).toBe("¿?");
+  });
+});
+
+describe("publicBaseUrl", () => {
+  beforeEach(() => {
+    delete process.env.APP_URL;
+    delete process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  });
+
+  const req = (url: string) => new Request(url, { method: "POST" });
+
+  it("usa APP_URL si está configurada", () => {
+    process.env.APP_URL = "https://cartas.mimiquate.com/";
+    expect(publicBaseUrl(req("http://localhost:3000/api/plays"))).toBe("https://cartas.mimiquate.com");
+  });
+
+  // Slack tiene que poder bajar la imagen: el dominio de producción siempre es público,
+  // el de una preview está detrás del login de Vercel.
+  it("cae al dominio de producción de Vercel antes que al del request", () => {
+    process.env.VERCEL_PROJECT_PRODUCTION_URL = "tracker.vercel.app";
+    expect(publicBaseUrl(req("https://tracker-git-rama-x.vercel.app/api/plays")))
+      .toBe("https://tracker.vercel.app");
+  });
+
+  it("sin nada configurado usa el origen del request", () => {
+    expect(publicBaseUrl(req("http://localhost:3000/api/plays"))).toBe("http://localhost:3000");
   });
 });
 

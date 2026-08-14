@@ -13,6 +13,19 @@ export type Block = {
 
 export type SlackMessage = { text: string; blocks: Block[] };
 
+/**
+ * De dónde salen el link y la imagen del mensaje. No se usa el origen del request: si el
+ * jurado registra desde una preview de Vercel (protegida con login) o desde localhost,
+ * Slack no puede bajar el arte de la carta.
+ */
+export function publicBaseUrl(req: Request): string {
+  const explicit = process.env.APP_URL;
+  if (explicit) return explicit.replace(/\/+$/, "");
+  const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  if (vercel) return `https://${vercel}`;
+  return new URL(req.url).origin;
+}
+
 const field = (label: string, value: string): Field => ({
   type: "mrkdwn",
   text: `*${label}*\n${value}`,

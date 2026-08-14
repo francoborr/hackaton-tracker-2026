@@ -43,6 +43,11 @@ al tablero. Para prenderlo:
 2. Cargarla en Vercel como `SLACK_WEBHOOK_URL` y **redeployar** (las env vars se toman
    recién en el deploy siguiente).
 
+El link y las imágenes de los mensajes salen siempre del dominio de producción (Vercel lo
+expone en `VERCEL_PROJECT_PRODUCTION_URL`), no del que usó el jurado: una preview está
+detrás del login de Vercel y Slack no podría bajar el arte. Con un dominio propio, setear
+`APP_URL`.
+
 El día del evento alcanza con crear el canal, generar el webhook y repetir el paso 2; se
 puede probar antes apuntando a un canal privado. Sin la variable la app no manda nada, y
 si Slack falla o tarda la jugada se registra igual — el aviso nunca bloquea al jurado.
