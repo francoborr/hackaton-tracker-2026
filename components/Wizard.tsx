@@ -85,7 +85,13 @@ export function Wizard({ game, nowMs, onClose, onDone }: {
 
   const now = new Date(nowMs);
   const isCursed = (teamId: string) =>
-    game.effects.some((e) => e.victimId === teamId && new Date(e.endsAt).getTime() > nowMs);
+    game.effects.some((e) =>
+      e.victimId === teamId &&
+      CARDS.find((c) => c.id === e.cardId)?.type === "sabotaje" &&
+      new Date(e.endsAt).getTime() > nowMs
+    );
+  const ayudaBusy = (cardId: string) =>
+    game.effects.some((e) => e.cardId === cardId && new Date(e.endsAt).getTime() > nowMs);
   const finalVictim = defense === "viento" ? redirect : target;
   const victimCursed =
     card?.type === "sabotaje" &&
@@ -134,12 +140,19 @@ export function Wizard({ game, nowMs, onClose, onDone }: {
                 <div className="g ayu">Ayuda</div>
                 <div className="chips">
                   {CARDS.filter((c) => c.type === "ayuda").map((c) => (
-                    <button key={c.id} className="chip" onClick={() => { setCard(c); go("confirm"); }}>
-                      {c.name}
-                      <Qmark
-                        title={c.name}
-                        body={`${c.effect}${c.minutes ? ` · dura ${c.minutes} min` : ""}`}
-                      />
+                    <button
+                      key={c.id}
+                      className="chip"
+                      disabled={ayudaBusy(c.id)}
+                      onClick={() => { setCard(c); go("confirm"); }}
+                    >
+                      {c.name} {ayudaBusy(c.id) && <small>⏳ en uso</small>}
+                      {!ayudaBusy(c.id) && (
+                        <Qmark
+                          title={c.name}
+                          body={`${c.effect}${c.minutes ? ` · dura ${c.minutes} min` : ""}`}
+                        />
+                      )}
                     </button>
                   ))}
                 </div>
@@ -212,7 +225,7 @@ export function Wizard({ game, nowMs, onClose, onDone }: {
             <>
               <div className="resumen">
                 <b>{atk.name}</b> juega <span className="cardname">{card.name}</span>
-                {card.type === "ayuda" && <> — {card.effect}.</>}
+                {card.type === "ayuda" && <> — {card.effect}, bendición de <b>{card.minutes} min</b>. Mientras corra, nadie más puede usar esta ayuda.</>}
                 {card.type === "sabotaje" && target && (
                   <>
                     {" "}contra <b>{target.name}</b>
@@ -228,6 +241,9 @@ export function Wizard({ game, nowMs, onClose, onDone }: {
               </div>
               {credits(game, atk.id, now) <= 0 && (
                 <div className="warn">⚠ {atk.name} no tiene cartas disponibles esta hora — podés registrar igual si el jurado lo avala.</div>
+              )}
+              {card.type === "ayuda" && ayudaBusy(card.id) && (
+                <div className="warn">⏳ {card.name} ya está en uso — esperá a que termine esa bendición.</div>
               )}
               {victimCursed && (
                 <div className="warn">☠ Hay un barco que ya está bajo una maldición — solo puede sufrir una a la vez. No se puede registrar hasta que expire o la termines con la ✕.</div>
@@ -247,7 +263,11 @@ export function Wizard({ game, nowMs, onClose, onDone }: {
             <div className="right">
               <button className="btn-ghost" onClick={onClose}>Cancelar</button>
               {step === "confirm" && (
-                <button className="btn-main" onClick={register} disabled={sending || victimCursed}>
+                <button
+                  className="btn-main"
+                  onClick={register}
+                  disabled={sending || victimCursed || (card?.type === "ayuda" && ayudaBusy(card.id))}
+                >
                   {sending ? "Registrando…" : "Registrar"}
                 </button>
               )}

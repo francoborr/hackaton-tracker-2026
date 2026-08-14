@@ -366,6 +366,12 @@ h2 {
 }
 .chip small { color: var(--parch-dim); font-size: .7rem; }
 .chip:hover { border-color: var(--gold); color: var(--gold); }
+.btile.bless {
+  border-color: var(--ayuda-hi);
+  background: linear-gradient(180deg, rgba(46, 106, 86, .22), rgba(46, 106, 86, .08));
+}
+.btile.bless .what { color: var(--ayuda-hi); }
+
 .chip:disabled {
   opacity: .45;
   cursor: not-allowed;

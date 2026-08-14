@@ -65,14 +65,27 @@ export function resolvePlay(game: Game, input: PlayInput, now: Date, id: () => s
   const at = now.toISOString();
   g.usages.push({ id: id(), teamId: input.attackerId, cardId: card.id, at });
 
-  if (card.type === "ayuda") return g;
+  if (card.type === "ayuda") {
+    // Cada ayuda es un recurso exclusivo: mientras la bendición corre, nadie más la usa.
+    if (game.effects.some((e) => e.cardId === card.id && new Date(e.endsAt) > now)) {
+      throw new Error("esa ayuda ya está en uso");
+    }
+    const blessEndsAt = new Date(now.getTime() + (card.minutes ?? 0) * 60_000).toISOString();
+    g.effects.push({
+      id: id(), cardId: card.id, attackerId: input.attackerId, victimId: input.attackerId, endsAt: blessEndsAt,
+    });
+    return g;
+  }
 
   const victimId = input.victimId;
   if (!victimId) throw new Error("falta la víctima");
 
   // Un barco maldito no puede recibir otra maldición — regla dura, sin override.
+  // Solo cuentan los sabotajes: una bendición (ayuda) activa no bloquea nada.
   const cursed = (teamId: string) =>
-    game.effects.some((e) => e.victimId === teamId && new Date(e.endsAt) > now);
+    game.effects.some((e) =>
+      e.victimId === teamId && cardById(e.cardId)?.type === "sabotaje" && new Date(e.endsAt) > now
+    );
   if (cursed(victimId)) throw new Error("la víctima ya está bajo una maldición");
 
   const endsAt = new Date(now.getTime() + (card.minutes ?? 0) * 60_000).toISOString();

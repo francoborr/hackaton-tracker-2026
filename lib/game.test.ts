@@ -56,11 +56,35 @@ describe("activeEffects", () => {
 });
 
 describe("resolvePlay", () => {
-  it("ayuda: solo un usage, sin efecto", () => {
+  it("ayuda: usage + bendición de 10 minutos sobre el propio barco", () => {
     const g = resolvePlay(baseGame(), { attackerId: "t1", cardId: "senal-de-humo" }, NOW, seq());
-    expect(g.effects).toHaveLength(0);
     expect(g.usages).toHaveLength(1);
     expect(g.usages[0]).toMatchObject({ teamId: "t1", cardId: "senal-de-humo" });
+    expect(g.effects).toHaveLength(1);
+    expect(g.effects[0]).toMatchObject({ attackerId: "t1", victimId: "t1", cardId: "senal-de-humo" });
+    expect(g.effects[0].endsAt).toBe("2026-09-07T14:10:00.000Z");
+  });
+
+  it("rechaza una ayuda que ya está en uso por otro barco", () => {
+    const g = baseGame();
+    g.effects.push({ id: "e1", cardId: "senal-de-humo", attackerId: "t2", victimId: "t2", endsAt: "2026-09-07T14:08:00Z" });
+    expect(() => resolvePlay(g, { attackerId: "t1", cardId: "senal-de-humo" }, NOW, seq()))
+      .toThrow("esa ayuda ya está en uso");
+    // otra ayuda distinta sí se puede, y una expirada no bloquea
+    expect(resolvePlay(g, { attackerId: "t1", cardId: "consejo-cartografo" }, NOW, seq()).effects).toHaveLength(2);
+    g.effects[0].endsAt = "2026-09-07T13:59:00Z";
+    expect(resolvePlay(g, { attackerId: "t1", cardId: "senal-de-humo" }, NOW, seq()).effects).toHaveLength(2);
+  });
+
+  it("una bendición activa no cuenta como maldición", () => {
+    const g = baseGame();
+    g.effects.push({ id: "e1", cardId: "consejo-cartografo", attackerId: "t1", victimId: "t1", endsAt: "2026-09-07T14:08:00Z" });
+    // t1 puede ser atacado aunque tenga una ayuda corriendo
+    const attacked = resolvePlay(g, { attackerId: "t2", cardId: "naufrago", victimId: "t1" }, NOW, seq());
+    expect(attacked.effects).toHaveLength(2);
+    // y t1 puede usar el kraken como atacante sin que su bendición lo bloquee
+    const kraken = resolvePlay(g, { attackerId: "t1", cardId: "naufrago", victimId: "t3", defense: "kraken" }, NOW, seq());
+    expect(kraken.effects).toHaveLength(3);
   });
 
   it("sabotaje sin defensa: efecto sobre la víctima con duración de la carta", () => {

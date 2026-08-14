@@ -62,7 +62,11 @@ mazo es un commit. Set oficial "Poderes v2":
 | Bandera extranjera | Hablan en inglés | 15 min |
 | Código del corsario | Disfrazados de pirata | 15 min |
 
-**Ayuda** (uso puntual, sin countdown; solo consume crédito):
+**Ayuda** (bendición de **10 minutos** sobre el propio barco; consume crédito): aparece en el
+tablero como "Bendiciones en curso" (tile verde) con countdown y ✕ como cualquier efecto.
+**Cada ayuda es un recurso exclusivo**: mientras una bendición corre, ningún otro barco puede
+usar esa misma carta (bloqueo duro, server + wizard). Una bendición activa NO cuenta como
+maldición: el barco puede ser atacado y jugar normalmente.
 
 - Consejo de cartógrafo — consulta a Javi
 - Consejo del almirante — consulta a un CEO de Mimiquate

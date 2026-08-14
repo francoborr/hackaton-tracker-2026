@@ -12,6 +12,7 @@ const DOMAIN_ERRORS = new Set([
   "la víctima ya está bajo una maldición",
   "el barco redirigido ya está bajo una maldición",
   "el atacante ya está bajo una maldición",
+  "esa ayuda ya está en uso",
 ]);
 
 export async function POST(req: Request) {
