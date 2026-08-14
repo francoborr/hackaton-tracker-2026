@@ -31,10 +31,7 @@ function Qmark({ id, open, setOpen, title, body }: {
   return (
     <>
       <span
-        role="button"
         className="qmark"
-        onMouseEnter={() => setOpen(id)}
-        onMouseLeave={() => setOpen(null)}
         onClick={(e) => {
           e.stopPropagation();
           setOpen(open === id ? null : id);
