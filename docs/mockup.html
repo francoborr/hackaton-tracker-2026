@@ -417,6 +417,96 @@
 
   #view-public { display: none; }
 
+  /* ============ reset travesía ============ */
+  .btn-danger {
+    font-family: var(--display);
+    font-variant: small-caps;
+    letter-spacing: .1em;
+    background: none;
+    border: 1px solid rgba(224, 102, 42, .5);
+    color: var(--ember-hi);
+    padding: .55rem 1.1rem;
+    cursor: pointer;
+  }
+  .btn-danger:hover { background: rgba(224, 102, 42, .12); }
+  .danger-zone {
+    margin-top: 5rem;
+    padding-top: 1.5rem;
+    border-top: 1px dashed rgba(224, 102, 42, .3);
+    text-align: center;
+  }
+  .reset-body {
+    font-size: .92rem;
+    line-height: 1.7;
+    text-align: center;
+    color: var(--parch);
+  }
+  .reset-body ul {
+    list-style: none;
+    margin: .8rem 0;
+    padding: 0;
+    color: var(--parch-dim);
+    font-size: .85rem;
+  }
+  .reset-body .keeps { color: var(--ayuda-hi); }
+
+  /* ============ popover "?" en cartas ============ */
+  .chip { position: relative; }
+  .qmark {
+    display: inline-block;
+    width: 1.05rem;
+    height: 1.05rem;
+    line-height: 1rem;
+    margin-left: .35rem;
+    border: 1px solid var(--frame);
+    border-radius: 50%;
+    background: rgba(0,0,0,.3);
+    color: var(--parch-dim);
+    font-size: .62rem;
+    font-family: var(--display);
+    text-align: center;
+    cursor: help;
+    vertical-align: 1px;
+  }
+  .qmark:hover { color: var(--gold); border-color: var(--gold); }
+  .pop {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 5;
+    width: max-content;
+    max-width: 230px;
+    background: var(--panel-2);
+    border: 1px solid var(--frame-hi);
+    box-shadow: 0 8px 24px rgba(0,0,0,.7);
+    padding: .5rem .7rem;
+    font-size: .74rem;
+    line-height: 1.5;
+    color: var(--parch);
+    text-align: center;
+    pointer-events: none;
+  }
+  .pop b {
+    display: block;
+    font-family: var(--display);
+    font-variant: small-caps;
+    font-weight: 400;
+    color: var(--gold);
+    font-size: .82rem;
+  }
+  .pop::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: var(--frame-hi);
+  }
+  .chip.showpop .pop { display: block; }
+
   .note {
     max-width: 860px;
     margin: 3rem auto 0;
@@ -442,7 +532,7 @@
 <!-- ==================== JURY VIEW ==================== -->
 <main class="wrap" id="view-jury">
   <div class="toolbar">
-    <span class="hora">⚓ Hora 3 de travesía</span>
+    <span class="hora" id="hora">⚓ Hora 3 de travesía</span>
     <button class="btn-main" onclick="openWizard()">⚓ Registrar carta</button>
   </div>
 
@@ -460,6 +550,11 @@
       <button class="btn-ghost" type="submit">Sumar barco</button>
     </form>
     <p class="hintline">El mazo de cartas no se edita desde la app: se carga una única vez por script al crear el proyecto.</p>
+  </div>
+
+  <div class="danger-zone">
+    <button class="btn-danger" onclick="document.getElementById('reset-modal').classList.add('open')">↺ Reiniciar la travesía</button>
+    <p class="hintline">Vuelve el juego al estado previo al zarpe. Pide confirmación.</p>
   </div>
 
 </main>
@@ -491,6 +586,32 @@
   </div>
 </div>
 
+<!-- ==================== MODAL: reiniciar travesía ==================== -->
+<div class="overlay" id="reset-modal">
+  <div class="modal">
+    <div class="inner">
+      <h2>¿Reiniciar la travesía?</h2>
+      <div class="reset-body">
+        Esto vuelve el juego al estado previo al zarpe:
+        <ul>
+          <li>✕ Se borra la hora de zarpe</li>
+          <li>✕ Se borran todas las maldiciones en curso</li>
+          <li>✕ Se borran los usos de cartas y créditos</li>
+          <li class="keeps">✓ La flota (los barcos) se mantiene</li>
+        </ul>
+        No se puede deshacer.
+      </div>
+      <div class="modal-actions">
+        <span></span>
+        <div class="right">
+          <button class="btn-ghost" onclick="document.getElementById('reset-modal').classList.remove('open')">Cancelar</button>
+          <button class="btn-danger" onclick="resetVoyage()">↺ Sí, reiniciar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <p class="note">Mockup navegable con datos de ejemplo. El wizard registra de verdad: crea la maldición y descuenta anclas. Las mechas se consumen en vivo y la maldición desaparece sola al llegar al final.</p>
 
 <script>
@@ -511,10 +632,10 @@
   ];
   var DEFENSAS = [
     { n: 'No', k: 'no' },
-    { n: 'Casco blindado', k: 'casco', hint: 'bloquea' },
-    { n: 'Viento en contra', k: 'viento', hint: 'redirige' },
-    { n: 'Maldición del Kraken', k: 'kraken', hint: 'a ambos' },
-    { n: 'Botín de repuesto', k: 'botin', hint: 'sufre +1 ayuda' }
+    { n: 'Casco blindado', k: 'casco', hint: 'bloquea', d: 'Bloquea el sabotaje: ambas cartas se gastan y no pasa nada.' },
+    { n: 'Viento en contra', k: 'viento', hint: 'redirige', d: 'Redirige la maldición hacia otro barco que elige el defensor.' },
+    { n: 'Maldición del Kraken', k: 'kraken', hint: 'a ambos', d: 'La maldición aplica a ambos: víctima y atacante a la vez.' },
+    { n: 'Botín de repuesto', k: 'botin', hint: 'sufre +1 ayuda', d: 'Sufre la maldición igual, pero gana una carta de ayuda de compensación.' }
   ];
 
   var effects = [
@@ -655,7 +776,9 @@
       crumb.innerHTML = 'Paso <b>4</b> · Defensa';
       body.innerHTML = '<div class="wizq">¿' + wiz.target + ' responde con defensa?</div><div class="chips">' +
         DEFENSAS.map(function (d) {
-          return '<button class="chip" onclick="pickDef(\'' + d.k + '\')">' + d.n + (d.hint ? ' <small>' + d.hint + '</small>' : '') + '</button>';
+          var pop = d.d ? '<span class="pop"><b>' + d.n + '</b>' + d.d + '</span>' : '';
+          var q = d.d ? '<span class="qmark" onmouseenter="showPop(this)" onmouseleave="hidePop(this)" onclick="event.stopPropagation(); togglePop(this)">?</span>' : '';
+          return '<button class="chip" onclick="pickDef(\'' + d.k + '\')">' + d.n + (d.hint ? ' <small>' + d.hint + '</small>' : '') + q + pop + '</button>';
         }).join('') + '</div>';
     }
 
@@ -690,7 +813,23 @@
   }
 
   function cardChip(c) {
-    return '<button class="chip" onclick="pickCard(\'' + c.n.replace(/'/g, "\\'") + '\')">' + c.n + (c.min ? ' <small>' + c.min + ' min</small>' : '') + '</button>';
+    var pop = '<span class="pop"><b>' + c.n + '</b>' + c.d + (c.min ? ' · dura ' + c.min + ' min' : '') + '</span>';
+    return '<button class="chip" onclick="pickCard(\'' + c.n.replace(/'/g, "\\'") + '\')">' + c.n +
+      (c.min ? ' <small>' + c.min + ' min</small>' : '') +
+      '<span class="qmark" onmouseenter="showPop(this)" onmouseleave="hidePop(this)" onclick="event.stopPropagation(); togglePop(this)">?</span>' + pop + '</button>';
+  }
+
+  function showPop(el) { el.parentElement.classList.add('showpop'); }
+  function hidePop(el) { el.parentElement.classList.remove('showpop'); }
+  function togglePop(el) { el.parentElement.classList.toggle('showpop'); }
+
+  function resetVoyage() {
+    effects = [];
+    Object.keys(creditos).forEach(function (t) { creditos[t] = 0; });
+    document.getElementById('hora').textContent = '⚓ Sin zarpar — flota lista';
+    document.getElementById('reset-modal').classList.remove('open');
+    renderBoards();
+    renderCreditos();
   }
 
   function pick(key, val) {
