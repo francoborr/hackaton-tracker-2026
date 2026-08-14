@@ -19,8 +19,12 @@ Dos vistas que renderizan el mismo estado:
 
 Secciones (ver mockup):
 
-1. **Maldiciones en curso**: un tile por efecto activo con "⚔ {atacante} maldijo a {víctima}",
-   nombre de la carta, efecto, countdown grande y una mecha que se consume. En vista jurado cada
+1. **Maldiciones en curso**: un tile por efecto activo con el **arte de la carta**
+   (`public/cards/<id>.jpg`, el mismo diseño que se imprime) a la izquierda y a la derecha
+   "⚔ {atacante} maldijo a {víctima}", nombre de la carta, efecto, countdown grande y una mecha
+   que se consume. Tres colores para distinguir los roles de un vistazo: **atacante** en azul
+   acero, **víctima** en pergamino claro, **carta** en el color de su categoría (ciruela
+   sabotaje / verde bendición). Si la carta ya no está en el mazo el tile va sin arte. En vista jurado cada
    tile tiene una "✕" para terminarlo antes de tiempo (pide confirmación). Al llegar a 0 el
    efecto desaparece solo. Si el atacante ya no está en la flota se muestra "¿?".
    Sin efectos: "El mar está en calma".
@@ -81,7 +85,7 @@ maldición: el barco puede ser atacado y jugar normalmente.
 
 | Carta | Resolución en la app |
 | --- | --- |
-| Casco blindado | El sabotaje queda bloqueado: ambas cartas usadas, sin efecto |
+| Inmunidad (arte impreso; era "Casco blindado") | El sabotaje queda bloqueado: ambas cartas usadas, sin efecto |
 | Viento en contra | El efecto se redirige al barco que elija el defensor (paso extra del wizard) |
 | Maldición del Kraken | El efecto corre para ambos: víctima y atacante (dos efectos gemelos) |
 | Botín de repuesto | La víctima sufre el efecto normal y gana +1 crédito (carta de ayuda random) |

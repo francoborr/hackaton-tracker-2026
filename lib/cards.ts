@@ -20,7 +20,7 @@ export const CARDS: Card[] = [
   { id: "consejo-cartografo", name: "Consejo de cartógrafo", type: "ayuda", effect: "Consulta a Javi", minutes: 10 },
   { id: "consejo-almirante", name: "Consejo del almirante", type: "ayuda", effect: "Consulta a un CEO de Mimiquate", minutes: 10 },
   { id: "senal-de-humo", name: "Señal de humo", type: "ayuda", effect: "Consulta al jurado", minutes: 10 },
-  { id: "casco-blindado", name: "Casco blindado", type: "defensa", effect: "Bloquea el próximo poder recibido" },
+  { id: "casco-blindado", name: "Inmunidad", type: "defensa", effect: "Bloquea el próximo poder recibido" },
   { id: "viento-en-contra", name: "Viento en contra", type: "defensa", effect: "Redirige un poder que te lanzaron" },
   { id: "maldicion-del-kraken", name: "Maldición del Kraken", type: "defensa", effect: "La carta aplica también al atacante" },
   { id: "botin-de-repuesto", name: "Botín de repuesto", type: "defensa", effect: "Sufrís el sabotaje y ganás una ayuda" },

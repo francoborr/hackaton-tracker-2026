@@ -13,6 +13,9 @@
   --ayuda-hi: #7cc4a8;
   --defensa: #3c5876;
   --defensa-hi: #92b4d4;
+  /* Roles del tile: quién ataca, quién la sufre (la carta usa el color de su categoría) */
+  --atacante: #92b4d4;
+  --victima: #f7ecd4;
   --ember: #e0662a;
   --ember-hi: #ffb361;
   --display: "Palatino Linotype", Palatino, "Book Antiqua", "Iowan Old Style", Georgia, serif;
@@ -134,51 +137,67 @@ h2 {
 /* ============ maldiciones tiles ============ */
 .board {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
   gap: 1.2rem;
 }
 .btile {
   position: relative;
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 1rem;
+  align-items: center;
   border: 1px solid var(--plum-hi);
-  background: linear-gradient(180deg, rgba(92,33,80,.22), rgba(92,33,80,.08));
-  padding: 1.2rem 1.2rem 1.1rem;
-  text-align: center;
+  background: linear-gradient(180deg, rgba(92,33,80,.22), rgba(92,33,80,.06));
+  padding: .9rem 1rem;
 }
+/* Si la carta salió del mazo no hay arte: el texto ocupa todo el tile. */
+.btile.noart { grid-template-columns: 1fr; }
+.tile-art {
+  width: 96px;
+  height: auto;
+  display: block;
+  border: 1px solid rgba(0,0,0,.6);
+  box-shadow: 0 4px 14px rgba(0,0,0,.6);
+}
+/* Tres colores para distinguir de un vistazo: atacante · víctima · carta */
 .btile .atk {
   font-family: var(--display);
-  font-size: .68rem;
-  letter-spacing: .24em;
+  font-size: .64rem;
+  letter-spacing: .22em;
   text-transform: uppercase;
   color: var(--parch-dim);
 }
 .btile .atk b {
-  color: var(--plum-hi);
+  color: var(--atacante);
   font-weight: 400;
-  font-size: .8rem;
+  font-size: .78rem;
+  letter-spacing: .1em;
 }
+.btile.bless .atk b { color: var(--ayuda-hi); }
 .btile .who {
   font-family: var(--display);
   font-variant: small-caps;
-  font-size: 1.7rem;
-  color: var(--parch);
-  margin-top: .15rem;
+  font-size: 1.5rem;
+  color: var(--victima);
+  line-height: 1.1;
+  text-shadow: 0 1px 0 #000;
   text-wrap: balance;
 }
 .btile .what {
   font-family: var(--display);
   font-variant: small-caps;
   color: var(--plum-hi);
-  font-size: 1.05rem;
-  margin: .15rem 0 .05rem;
+  font-size: 1rem;
 }
-.btile .desc { font-size: .8rem; color: var(--parch-dim); margin-bottom: .8rem; }
+.btile .desc { font-size: .74rem; color: var(--parch-dim); margin-bottom: .5rem; }
 .btile .big {
   font-family: var(--display);
-  font-size: 2.5rem;
+  font-size: 2.1rem;
   color: var(--ember-hi);
   font-variant-numeric: tabular-nums;
-  text-shadow: 0 0 18px rgba(224,102,42,.4);
-  margin-bottom: .7rem;
+  line-height: 1;
+  text-shadow: 0 0 18px rgba(224,102,42,.35);
+  margin-bottom: .45rem;
 }
 .btn-x {
   position: absolute;

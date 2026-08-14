@@ -9,7 +9,7 @@ type Step = "atk" | "card" | "target" | "def" | "redirect" | "confirm";
 
 const DEFENSES: { key: Defense | "no"; name: string; hint?: string; desc?: string }[] = [
   { key: "no", name: "No" },
-  { key: "casco", name: "Casco blindado", hint: "bloquea", desc: "Bloquea el sabotaje: ambas cartas se gastan y no pasa nada." },
+  { key: "casco", name: "Inmunidad", hint: "bloquea", desc: "Bloquea el sabotaje: ambas cartas se gastan y no pasa nada." },
   { key: "viento", name: "Viento en contra", hint: "redirige", desc: "Redirige la maldición hacia otro barco que elige el defensor." },
   { key: "kraken", name: "Maldición del Kraken", hint: "a ambos", desc: "La maldición aplica a ambos: víctima y atacante a la vez." },
   { key: "botin", name: "Botín de repuesto", hint: "sufre +1 ayuda", desc: "Sufre la maldición igual, pero gana una carta de ayuda de compensación." },
@@ -274,7 +274,7 @@ export function Wizard({ game, nowMs, onClose, onDone }: {
                   <>
                     {" "}contra <b>{target.name}</b>
                     {(!defense || defense === "no") && <>. Sin defensa: la maldición corre <b>{card.minutes} min</b>.</>}
-                    {defense === "casco" && <>. <b>Casco blindado</b>: bloqueada, ambas cartas usadas, sin efecto.</>}
+                    {defense === "casco" && <>. <b>Inmunidad</b>: bloqueada, ambas cartas usadas, sin efecto.</>}
                     {defense === "viento" && redirect && (
                       <>. <b>Viento en contra</b>: la maldición se redirige a <b>{redirect.name}</b> por {card.minutes} min.</>
                     )}

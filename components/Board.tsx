@@ -18,21 +18,26 @@ function Tile({ effect, game, nowMs, onEnd }: {
   const name = (id: string) => game.teams.find((t) => t.id === id)?.name ?? "¿?";
 
   return (
-    <div className={bless ? "btile bless" : "btile"}>
+    <div className={`btile${bless ? " bless" : ""}${card ? "" : " noart"}`}>
       {onEnd && (
         <button className="btn-x" title="Terminar ahora" onClick={() => onEnd(effect.id)}>✕</button>
       )}
-      {bless ? (
-        <div className="atk">🕊 bendición para</div>
-      ) : (
-        <div className="atk">⚔ <b>{name(effect.attackerId)}</b> maldijo a</div>
+      {card && (
+        <img className="tile-art" src={`/cards/${card.id}.jpg`} alt={card.name} width={234} height={331} />
       )}
-      <div className="who">{name(effect.victimId)}</div>
-      <div className="what">{card?.name ?? effect.cardId}</div>
-      <div className="desc">{card?.effect}</div>
-      <div className="big">{fmt(leftMs)}</div>
-      <div className="fuse">
-        <div className="fuse-fill" style={{ width: `${totalMs ? Math.min(100, (leftMs / totalMs) * 100) : 0}%` }} />
+      <div>
+        {bless ? (
+          <div className="atk">🕊 bendición para</div>
+        ) : (
+          <div className="atk">⚔ <b>{name(effect.attackerId)}</b> maldijo a</div>
+        )}
+        <div className="who">{name(effect.victimId)}</div>
+        <div className="what">{card?.name ?? effect.cardId}</div>
+        <div className="desc">{card?.effect}</div>
+        <div className="big">{fmt(leftMs)}</div>
+        <div className="fuse">
+          <div className="fuse-fill" style={{ width: `${totalMs ? Math.min(100, (leftMs / totalMs) * 100) : 0}%` }} />
+        </div>
       </div>
     </div>
   );
