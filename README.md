@@ -25,7 +25,8 @@ variables de Upstash son obligatorias en producción.
 
 1. Importar el repo en Vercel.
 2. En el marketplace de Vercel agregar **Upstash Redis** al proyecto — inyecta
-   `UPSTASH_REDIS_REST_URL` y `UPSTASH_REDIS_REST_TOKEN`.
+   `KV_REST_API_URL` y `KV_REST_API_TOKEN` (también sirven `UPSTASH_REDIS_REST_URL` y
+   `UPSTASH_REDIS_REST_TOKEN` si la base se crea a mano en Upstash).
 3. Agregar la env var `JURY_PIN` (el PIN compartido del jurado). Es obligatoria: en
    producción, sin `JURY_PIN` toda mutación se rechaza con 401. La apertura sin PIN
    existe solo para desarrollo local.

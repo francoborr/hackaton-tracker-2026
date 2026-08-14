@@ -3,9 +3,13 @@ import { emptyGame, type Game } from "./game";
 
 const KEY = "game";
 
+// La integración de Upstash del marketplace de Vercel inyecta KV_*; una base creada a
+// mano en Upstash usa UPSTASH_REDIS_*. Aceptamos ambos nombres.
 function redisClient(): Redis | null {
-  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) return null;
-  return Redis.fromEnv();
+  const url = process.env.UPSTASH_REDIS_REST_URL ?? process.env.KV_REST_API_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN ?? process.env.KV_REST_API_TOKEN;
+  if (!url || !token) return null;
+  return new Redis({ url, token });
 }
 
 // En `next dev` cada route handler puede evaluar este módulo por separado, así que el
