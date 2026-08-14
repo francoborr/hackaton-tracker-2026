@@ -47,6 +47,18 @@ export default function Jurado() {
     refresh();
   }
 
+  async function advanceHour() {
+    if (!confirm("¿Adelantar una hora de travesía? Todos los barcos ganan una carta.")) return;
+    try {
+      const res = await mutate("/api/advance-hour", "POST");
+      if (res.status === 401) alert("PIN inválido — recargá la página");
+      if (res.status === 422) alert("Todavía no zarparon — no hay hora que adelantar");
+    } catch {
+      alert("Sin conexión — probá de nuevo");
+    }
+    refresh();
+  }
+
   async function reset() {
     try {
       const res = await mutate("/api/reset", "POST");
@@ -83,8 +95,14 @@ export default function Jurado() {
             <Fleet game={game} onChange={refresh} />
 
             <div className="danger-zone">
-              <button className="btn-danger" onClick={() => setResetOpen(true)}>↺ Reiniciar la travesía</button>
-              <p className="hintline">Vuelve el juego al estado previo al zarpe. Pide confirmación.</p>
+              <div className="danger-actions">
+                <button className="btn-danger" onClick={advanceHour}>⏩ Adelantar una hora</button>
+                <button className="btn-danger" onClick={() => setResetOpen(true)}>↺ Reiniciar la travesía</button>
+              </div>
+              <p className="hintline">
+                Adelantar da una carta más a todos los barcos. Reiniciar vuelve el juego al estado
+                previo al zarpe. Ambos piden confirmación.
+              </p>
             </div>
 
             {resetOpen && (

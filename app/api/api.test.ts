@@ -8,6 +8,7 @@ import { POST as postTeam } from "@/app/api/teams/route";
 import { DELETE as deleteTeam } from "@/app/api/teams/[id]/route";
 import { POST as postSail } from "@/app/api/sail/route";
 import { POST as postReset } from "@/app/api/reset/route";
+import { POST as postAdvance } from "@/app/api/advance-hour/route";
 import { GET as getPin } from "@/app/api/pin/route";
 
 function req(body?: unknown, pin?: string): Request {
@@ -161,6 +162,29 @@ describe("flujo de juego", () => {
     const first = (await loadGame()).startedAt;
     await postSail(req());
     expect((await loadGame()).startedAt).toBe(first);
+  });
+
+  it("adelantar una hora corre el zarpe una hora hacia atrás", async () => {
+    await postSail(req());
+    const started = new Date((await loadGame()).startedAt as string).getTime();
+
+    const res = await postAdvance(req());
+    expect(res.status).toBe(200);
+    const after = new Date((await loadGame()).startedAt as string).getTime();
+    expect(after).toBe(started - 3_600_000);
+  });
+
+  it("adelantar una hora sin zarpar devuelve 422", async () => {
+    const res = await postAdvance(req());
+    expect(res.status).toBe(422);
+  });
+
+  it("adelantar una hora respeta el PIN", async () => {
+    await postSail(req());
+    process.env.JURY_PIN = "1234";
+    expect((await postAdvance(req())).status).toBe(401);
+    expect((await postAdvance(req(undefined, "9999"))).status).toBe(401);
+    expect((await postAdvance(req(undefined, "1234"))).status).toBe(200);
   });
 
   it("reiniciar vuelve al estado previo al zarpe y conserva la flota", async () => {
