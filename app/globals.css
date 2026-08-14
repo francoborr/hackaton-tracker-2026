@@ -475,7 +475,9 @@ h2 {
   vertical-align: 1px;
 }
 .qmark:hover { color: var(--gold); border-color: var(--gold); }
+.qmark:hover + .pop { display: block; }
 .pop {
+  display: none;
   position: absolute;
   bottom: calc(100% + 8px);
   left: 50%;
