@@ -139,6 +139,42 @@ describe("resolvePlay", () => {
     ).toThrow("defensa inválida");
   });
 
+  it("rechaza sabotear a un barco que ya está maldito", () => {
+    const g = baseGame();
+    g.effects.push({ id: "e1", cardId: "naufrago", attackerId: "t3", victimId: "t1", endsAt: "2026-09-07T14:05:00Z" });
+    expect(() => resolvePlay(g, { attackerId: "t2", cardId: "mano-de-garfio", victimId: "t1" }, NOW, seq()))
+      .toThrow("la víctima ya está bajo una maldición");
+    expect(() => resolvePlay(g, { attackerId: "t2", cardId: "mano-de-garfio", victimId: "t1", defense: "casco" }, NOW, seq()))
+      .toThrow("la víctima ya está bajo una maldición");
+  });
+
+  it("una maldición expirada no bloquea un sabotaje nuevo", () => {
+    const g = baseGame();
+    g.effects.push({ id: "e1", cardId: "naufrago", attackerId: "t3", victimId: "t1", endsAt: "2026-09-07T13:59:00Z" });
+    const out = resolvePlay(g, { attackerId: "t2", cardId: "mano-de-garfio", victimId: "t1" }, NOW, seq());
+    expect(out.effects).toHaveLength(2);
+  });
+
+  it("rechaza redirigir con viento hacia un barco maldito", () => {
+    const g = baseGame();
+    g.effects.push({ id: "e1", cardId: "naufrago", attackerId: "t1", victimId: "t3", endsAt: "2026-09-07T14:05:00Z" });
+    expect(() => resolvePlay(
+      g,
+      { attackerId: "t2", cardId: "mano-de-garfio", victimId: "t1", defense: "viento", redirectId: "t3" },
+      NOW, seq(),
+    )).toThrow("el barco redirigido ya está bajo una maldición");
+  });
+
+  it("rechaza el kraken si el atacante ya está maldito", () => {
+    const g = baseGame();
+    g.effects.push({ id: "e1", cardId: "naufrago", attackerId: "t3", victimId: "t2", endsAt: "2026-09-07T14:05:00Z" });
+    expect(() => resolvePlay(
+      g,
+      { attackerId: "t2", cardId: "mano-de-garfio", victimId: "t1", defense: "kraken" },
+      NOW, seq(),
+    )).toThrow("el atacante ya está bajo una maldición");
+  });
+
   it("rechaza carta inexistente, defensa como jugada, y sabotaje sin víctima", () => {
     expect(() => resolvePlay(baseGame(), { attackerId: "t1", cardId: "nope" }, NOW, seq())).toThrow();
     expect(() => resolvePlay(baseGame(), { attackerId: "t1", cardId: "casco-blindado" }, NOW, seq())).toThrow();

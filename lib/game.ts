@@ -70,6 +70,11 @@ export function resolvePlay(game: Game, input: PlayInput, now: Date, id: () => s
   const victimId = input.victimId;
   if (!victimId) throw new Error("falta la víctima");
 
+  // Un barco maldito no puede recibir otra maldición — regla dura, sin override.
+  const cursed = (teamId: string) =>
+    game.effects.some((e) => e.victimId === teamId && new Date(e.endsAt) > now);
+  if (cursed(victimId)) throw new Error("la víctima ya está bajo una maldición");
+
   const endsAt = new Date(now.getTime() + (card.minutes ?? 0) * 60_000).toISOString();
   const makeEffect = (attackerId: string, target: string): Effect => ({
     id: id(), cardId: card.id, attackerId, victimId: target, endsAt,
@@ -83,8 +88,10 @@ export function resolvePlay(game: Game, input: PlayInput, now: Date, id: () => s
     g.effects.push(makeEffect(input.attackerId, victimId));
   } else if (defense === "viento") {
     if (!input.redirectId) throw new Error("falta el barco redirigido");
+    if (cursed(input.redirectId)) throw new Error("el barco redirigido ya está bajo una maldición");
     g.effects.push(makeEffect(victimId, input.redirectId));
   } else if (defense === "kraken") {
+    if (cursed(input.attackerId)) throw new Error("el atacante ya está bajo una maldición");
     g.effects.push(makeEffect(input.attackerId, victimId));
     g.effects.push(makeEffect(victimId, input.attackerId));
   } else if (defense === "botin") {

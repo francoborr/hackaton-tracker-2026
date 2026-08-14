@@ -84,12 +84,14 @@ export function Wizard({ game, nowMs, onClose, onDone }: {
   }
 
   const now = new Date(nowMs);
+  const isCursed = (teamId: string) =>
+    game.effects.some((e) => e.victimId === teamId && new Date(e.endsAt).getTime() > nowMs);
   const finalVictim = defense === "viento" ? redirect : target;
   const victimCursed =
     card?.type === "sabotaje" &&
-    defense !== "casco" &&
-    finalVictim !== null &&
-    game.effects.some((e) => e.victimId === finalVictim.id && new Date(e.endsAt).getTime() > nowMs);
+    ((target !== null && isCursed(target.id)) ||
+      (finalVictim !== null && isCursed(finalVictim.id)) ||
+      (defense === "kraken" && atk !== null && isCursed(atk.id)));
 
   return (
     <div className="overlay open">
@@ -150,8 +152,13 @@ export function Wizard({ game, nowMs, onClose, onDone }: {
               <div className="wizq">¿Contra qué barco?</div>
               <div className="chips">
                 {game.teams.filter((t) => t.id !== atk?.id).map((t) => (
-                  <button key={t.id} className="chip" onClick={() => { setTarget(t); go("def"); }}>
-                    {t.name}
+                  <button
+                    key={t.id}
+                    className="chip"
+                    disabled={isCursed(t.id)}
+                    onClick={() => { setTarget(t); go("def"); }}
+                  >
+                    {t.name} {isCursed(t.id) && <small>☠ ya maldito</small>}
                   </button>
                 ))}
               </div>
@@ -162,21 +169,23 @@ export function Wizard({ game, nowMs, onClose, onDone }: {
             <>
               <div className="wizq">¿{target?.name} responde con defensa?</div>
               <div className="chips">
-                {DEFENSES.map((d) => (
-                  <button
-                    key={d.key}
-                    className="chip"
-                    onClick={() => {
-                      setDefense(d.key);
-                      go(d.key === "viento" ? "redirect" : "confirm");
-                    }}
-                  >
-                    {d.name} {d.hint && <small>{d.hint}</small>}
-                    {d.desc && (
-                      <Qmark title={d.name} body={d.desc} />
-                    )}
-                  </button>
-                ))}
+                {DEFENSES.map((d) => {
+                  const krakenBlocked = d.key === "kraken" && atk !== null && isCursed(atk.id);
+                  return (
+                    <button
+                      key={d.key}
+                      className="chip"
+                      disabled={krakenBlocked}
+                      onClick={() => {
+                        setDefense(d.key);
+                        go(d.key === "viento" ? "redirect" : "confirm");
+                      }}
+                    >
+                      {d.name} {d.hint && <small>{krakenBlocked ? "☠ atacante maldito" : d.hint}</small>}
+                      {d.desc && !krakenBlocked && <Qmark title={d.name} body={d.desc} />}
+                    </button>
+                  );
+                })}
               </div>
             </>
           )}
@@ -186,8 +195,13 @@ export function Wizard({ game, nowMs, onClose, onDone }: {
               <div className="wizq">Viento en contra: ¿hacia qué barco se redirige?</div>
               <div className="chips">
                 {game.teams.filter((t) => t.id !== target?.id).map((t) => (
-                  <button key={t.id} className="chip" onClick={() => { setRedirect(t); go("confirm"); }}>
-                    {t.name}
+                  <button
+                    key={t.id}
+                    className="chip"
+                    disabled={isCursed(t.id)}
+                    onClick={() => { setRedirect(t); go("confirm"); }}
+                  >
+                    {t.name} {isCursed(t.id) && <small>☠ ya maldito</small>}
                   </button>
                 ))}
               </div>
@@ -215,8 +229,8 @@ export function Wizard({ game, nowMs, onClose, onDone }: {
               {credits(game, atk.id, now) <= 0 && (
                 <div className="warn">⚠ {atk.name} no tiene cartas disponibles esta hora — podés registrar igual si el jurado lo avala.</div>
               )}
-              {victimCursed && finalVictim && (
-                <div className="warn">⚠ {finalVictim.name} ya está bajo una maldición — solo puede sufrir una a la vez. Terminá la anterior o registrá igual.</div>
+              {victimCursed && (
+                <div className="warn">☠ Hay un barco que ya está bajo una maldición — solo puede sufrir una a la vez. No se puede registrar hasta que expire o la termines con la ✕.</div>
               )}
               {serverError && <div className="warn">⚠ {serverError}</div>}
             </>
@@ -233,7 +247,7 @@ export function Wizard({ game, nowMs, onClose, onDone }: {
             <div className="right">
               <button className="btn-ghost" onClick={onClose}>Cancelar</button>
               {step === "confirm" && (
-                <button className="btn-main" onClick={register} disabled={sending}>
+                <button className="btn-main" onClick={register} disabled={sending || victimCursed}>
                   {sending ? "Registrando…" : "Registrar"}
                 </button>
               )}

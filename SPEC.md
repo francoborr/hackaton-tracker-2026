@@ -35,8 +35,10 @@ Secciones (ver mockup):
   inicio (el almuerzo no pausa). La app **avisa pero no bloquea** si un equipo sin crédito juega
   una carta (override del jurado, siempre).
 - **Una maldición por víctima**: un equipo no puede estar sufriendo más de un efecto a la vez.
-  Warning con override, igual que el crédito. Del lado del que juega no hay límite: un equipo
-  puede tener varias jugadas activas si acumuló créditos.
+  **Bloqueo duro, sin override** (a diferencia del crédito): el server rechaza la jugada (422) y
+  el wizard deshabilita los barcos malditos como objetivo/redirección (y el Kraken si el
+  atacante está maldito). Para desbloquear: esperar a que expire o terminarla con la ✕. Del lado
+  del que juega no hay límite: un equipo puede tener varias jugadas activas si acumuló créditos.
 - **Inicio del evento**: la vista jurado muestra "Hora N de travesía". Antes de arrancar hay un
   botón "Zarpar" que fija `startedAt` (único elemento no presente en el mockup).
 - Las cartas son transferibles entre equipos fuera de la app: **no se trackea inventario**, solo

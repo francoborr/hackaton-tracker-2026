@@ -115,6 +115,7 @@ button:focus-visible, input:focus-visible {
   cursor: pointer;
 }
 .btn-main:hover { filter: brightness(1.08); }
+.btn-main:disabled { opacity: .5; cursor: not-allowed; filter: none; }
 .zarpar-hint {
   font-family: var(--display);
   font-size: .68rem;
@@ -365,6 +366,12 @@ h2 {
 }
 .chip small { color: var(--parch-dim); font-size: .7rem; }
 .chip:hover { border-color: var(--gold); color: var(--gold); }
+.chip:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+  border-color: var(--frame);
+  color: var(--parch-dim);
+}
 .grp .g {
   font-family: var(--display);
   font-size: .62rem;
