@@ -5,7 +5,7 @@ import { getPin, setPin } from "@/lib/client";
 
 export function PinGate({ onOk }: { onOk: () => void }) {
   const [value, setValue] = useState("");
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
 
   async function verify(pin: string) {
@@ -15,11 +15,13 @@ export function PinGate({ onOk }: { onOk: () => void }) {
       if (res.ok) {
         setPin(pin);
         onOk();
+      } else if (res.status === 503) {
+        setError("El PIN del jurado no está configurado — avisale a quien deployó");
       } else {
-        setError(true);
+        setError("PIN inválido — probá de nuevo");
       }
     } catch {
-      setError(true);
+      setError("Sin conexión — probá de nuevo");
     } finally {
       setChecking(false);
     }
@@ -41,7 +43,7 @@ export function PinGate({ onOk }: { onOk: () => void }) {
         onChange={(e) => setValue(e.target.value)}
         placeholder="PIN"
       />
-      {error && <div className="error">PIN inválido — probá de nuevo</div>}
+      {error && <div className="error">{error}</div>}
       <button className="btn-main" type="submit" disabled={checking}>
         Abordar
       </button>

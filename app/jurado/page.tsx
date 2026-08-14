@@ -7,13 +7,13 @@ import { Fleet } from "@/components/Fleet";
 import { Masthead } from "@/components/Masthead";
 import { PinGate, usePinVerified } from "@/components/PinGate";
 import { Wizard } from "@/components/Wizard";
-import { mutate, useGame, useNowMs } from "@/lib/client";
+import { cardById } from "@/lib/cards";
+import { mutate, useGame } from "@/lib/client";
 import { currentHour } from "@/lib/game";
 
 export default function Jurado() {
   const [pinOk, markVerified] = usePinVerified();
-  const { game, refresh } = useGame();
-  const nowMs = useNowMs();
+  const { game, nowMs, refresh, failed } = useGame();
   const [wizardOpen, setWizardOpen] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
 
@@ -28,6 +28,10 @@ export default function Jurado() {
   }
 
   async function endEffect(id: string) {
+    const effect = game?.effects.find((e) => e.id === id);
+    const carta = cardById(effect?.cardId ?? "")?.name ?? effect?.cardId ?? "esta carta";
+    const victima = game?.teams.find((t) => t.id === effect?.victimId)?.name ?? "¿?";
+    if (!confirm(`¿Terminar ${carta} sobre ${victima}?`)) return;
     try {
       const res = await mutate(`/api/effects/${id}`, "DELETE");
       if (res.status === 401) alert("PIN inválido — recargá la página");
@@ -74,6 +78,11 @@ export default function Jurado() {
     <>
       <Masthead />
       <main className="wrap">
+        {game === null && (
+          <div className="calm">
+            {failed ? "Sin conexión con el navío — reintentando…" : "Cargando la travesía…"}
+          </div>
+        )}
         {game && nowMs !== null && (
           <>
             <div className="toolbar">
@@ -82,7 +91,13 @@ export default function Jurado() {
               ) : (
                 <button className="btn-main" onClick={sail}>⚓ Zarpar</button>
               )}
-              <button className="btn-main" onClick={() => setWizardOpen(true)}>⚓ Registrar carta</button>
+              <button
+                className="btn-main"
+                disabled={game.teams.length === 0}
+                onClick={() => setWizardOpen(true)}
+              >
+                ⚓ Registrar carta
+              </button>
             </div>
 
             <h2>Maldiciones en curso</h2>

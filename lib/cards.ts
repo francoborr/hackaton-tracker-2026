@@ -5,7 +5,7 @@ export type Card = {
   name: string;
   type: CardType;
   effect: string;
-  minutes?: number; // solo sabotaje
+  minutes?: number; // sabotaje: duración de la maldición; ayuda: duración de la bendición
 };
 
 export const CARDS: Card[] = [
@@ -18,7 +18,7 @@ export const CARDS: Card[] = [
   { id: "bandera-extranjera", name: "Bandera extranjera", type: "sabotaje", effect: "Hablan en inglés", minutes: 15 },
   { id: "codigo-del-corsario", name: "Código del corsario", type: "sabotaje", effect: "Disfrazados de pirata", minutes: 15 },
   { id: "consejo-cartografo", name: "Consejo de cartógrafo", type: "ayuda", effect: "Consulta a Javi", minutes: 10 },
-  { id: "consejo-almirante", name: "Consejo del almirante", type: "ayuda", effect: "Consulta a un CEO", minutes: 10 },
+  { id: "consejo-almirante", name: "Consejo del almirante", type: "ayuda", effect: "Consulta a un CEO de Mimiquate", minutes: 10 },
   { id: "senal-de-humo", name: "Señal de humo", type: "ayuda", effect: "Consulta al jurado", minutes: 10 },
   { id: "casco-blindado", name: "Casco blindado", type: "defensa", effect: "Bloquea el próximo poder recibido" },
   { id: "viento-en-contra", name: "Viento en contra", type: "defensa", effect: "Redirige un poder que te lanzaron" },

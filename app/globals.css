@@ -116,13 +116,6 @@ button:focus-visible, input:focus-visible {
 }
 .btn-main:hover { filter: brightness(1.08); }
 .btn-main:disabled { opacity: .5; cursor: not-allowed; filter: none; }
-.zarpar-hint {
-  font-family: var(--display);
-  font-size: .68rem;
-  letter-spacing: .24em;
-  text-transform: uppercase;
-  color: var(--parch-dim);
-}
 
 /* ============ section titles ============ */
 h2 {
@@ -195,10 +188,11 @@ h2 {
   color: var(--parch-dim);
   font-size: .72rem;
   line-height: 1;
-  padding: .28rem .45rem;
+  padding: .5rem .6rem;
   cursor: pointer;
 }
 .btn-x:hover { color: var(--ember-hi); border-color: var(--ember); }
+.btn-x.inline { position: static; }
 
 /* the fuse */
 .fuse {
@@ -262,7 +256,6 @@ h2 {
   font-size: 1.1rem;
 }
 .crow .on { color: var(--gold); letter-spacing: .2em; }
-.crow .off { opacity: .25; letter-spacing: .2em; }
 .crow .none { color: var(--parch-dim); font-style: italic; font-size: .8rem; }
 .fleet-list { display: flex; flex-direction: column; gap: .45rem; }
 .addrow { margin-top: .2rem; }
@@ -316,6 +309,7 @@ h2 {
   justify-content: center;
   padding: 3rem 1rem;
   overflow-y: auto;
+  overflow-x: hidden;
   z-index: 10;
 }
 .overlay.open { display: flex; }
@@ -356,6 +350,7 @@ h2 {
 }
 .chips { display: flex; flex-wrap: wrap; gap: .45rem; justify-content: center; }
 .chip {
+  position: relative;
   font-family: var(--body);
   font-size: .85rem;
   color: var(--parch);
@@ -470,7 +465,6 @@ h2 {
 .reset-body .keeps { color: var(--ayuda-hi); }
 
 /* ============ popover "?" en cartas ============ */
-.chip { position: relative; }
 .qmark {
   display: inline-block;
   width: 1.05rem;
@@ -489,6 +483,7 @@ h2 {
 }
 .qmark:hover { color: var(--gold); border-color: var(--gold); }
 .qmark:hover + .pop { display: block; }
+.qmark:active + .pop { display: block; }
 .pop {
   display: none;
   position: absolute;
@@ -497,7 +492,7 @@ h2 {
   transform: translateX(-50%);
   z-index: 5;
   width: max-content;
-  max-width: 230px;
+  max-width: min(230px, 68vw);
   background: var(--panel-2);
   border: 1px solid var(--frame-hi);
   box-shadow: 0 8px 24px rgba(0,0,0,.7);

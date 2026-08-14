@@ -199,6 +199,44 @@ describe("resolvePlay", () => {
     )).toThrow("el atacante ya está bajo una maldición");
   });
 
+  it("rechaza que un barco se ataque a sí mismo", () => {
+    expect(() => resolvePlay(baseGame(), { attackerId: "t1", cardId: "naufrago", victimId: "t1" }, NOW, seq()))
+      .toThrow("un barco no puede atacarse a sí mismo");
+    // el kraken es el caso feo: dos efectos gemelos sobre el mismo barco
+    expect(() => resolvePlay(
+      baseGame(),
+      { attackerId: "t1", cardId: "naufrago", victimId: "t1", defense: "kraken" },
+      NOW, seq(),
+    )).toThrow("un barco no puede atacarse a sí mismo");
+  });
+
+  it("rechaza redirigir el viento hacia la propia víctima", () => {
+    expect(() => resolvePlay(
+      baseGame(),
+      { attackerId: "t2", cardId: "naufrago", victimId: "t1", defense: "viento", redirectId: "t1" },
+      NOW, seq(),
+    )).toThrow("la redirección debe ir a otro barco");
+  });
+
+  it("rechaza barcos que no están en la flota", () => {
+    expect(() => resolvePlay(baseGame(), { attackerId: "fantasma", cardId: "senal-de-humo" }, NOW, seq()))
+      .toThrow("ese barco ya no está en la flota");
+    expect(() => resolvePlay(baseGame(), { attackerId: "t1", cardId: "naufrago", victimId: "fantasma" }, NOW, seq()))
+      .toThrow("ese barco ya no está en la flota");
+    expect(() => resolvePlay(
+      baseGame(),
+      { attackerId: "t2", cardId: "naufrago", victimId: "t1", defense: "viento", redirectId: "fantasma" },
+      NOW, seq(),
+    )).toThrow("ese barco ya no está en la flota");
+  });
+
+  it("un efecto con una carta desconocida cuenta como maldición", () => {
+    const g = baseGame();
+    g.effects.push({ id: "e1", cardId: "carta-fantasma", attackerId: "t3", victimId: "t1", endsAt: "2026-09-07T14:05:00Z" });
+    expect(() => resolvePlay(g, { attackerId: "t2", cardId: "naufrago", victimId: "t1" }, NOW, seq()))
+      .toThrow("la víctima ya está bajo una maldición");
+  });
+
   it("rechaza carta inexistente, defensa como jugada, y sabotaje sin víctima", () => {
     expect(() => resolvePlay(baseGame(), { attackerId: "t1", cardId: "nope" }, NOW, seq())).toThrow();
     expect(() => resolvePlay(baseGame(), { attackerId: "t1", cardId: "casco-blindado" }, NOW, seq())).toThrow();

@@ -65,10 +65,26 @@ describe("PIN", () => {
     expect((await postSail(req())).status).toBe(200);
   });
 
+  it("sin JURY_PIN en producción /api/pin avisa que falta configurarlo", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    const res = await getPin(req());
+    expect(res.status).toBe(503);
+    expect(await res.json()).toEqual({ error: "el PIN del jurado no está configurado" });
+
+    // con PIN configurado sigue siendo un 401 común
+    process.env.JURY_PIN = "1234";
+    expect((await getPin(req(undefined, "9999"))).status).toBe(401);
+  });
+
   it("bloquea todas las rutas de mutación sin PIN o con PIN incorrecto", async () => {
+    // la jugada exige barcos reales: t1 es el que se borra, así que ataca t2 a t3
+    await saveGame({
+      ...emptyGame(),
+      teams: [{ id: "t1", name: "A" }, { id: "t2", name: "B" }, { id: "t3", name: "C" }],
+    });
     process.env.JURY_PIN = "1234";
     const mutations = (pin?: string) => [
-      postPlay(req({ attackerId: "t1", cardId: "naufrago", victimId: "t2" }, pin)),
+      postPlay(req({ attackerId: "t2", cardId: "naufrago", victimId: "t3" }, pin)),
       postTeam(req({ name: "La Perla Negra" }, pin)),
       deleteTeam(req(undefined, pin), { params: Promise.resolve({ id: "t1" }) }),
       deleteEffect(req(undefined, pin), { params: Promise.resolve({ id: "e1" }) }),
@@ -133,16 +149,63 @@ describe("flujo de juego", () => {
     expect((await postTeam(req({ name: "El Kraken" }))).status).toBe(422);
   });
 
-  it("borrar equipo elimina sus efectos", async () => {
+  it("borrar equipo elimina las maldiciones que sufre pero no las que lanzó", async () => {
+    await postTeam(req({ name: "A" }));
+    await postTeam(req({ name: "B" }));
+    await postTeam(req({ name: "C" }));
+    let game = await (await getState()).json();
+    const [a, b, c] = game.teams;
+    await postPlay(req({ attackerId: a.id, cardId: "naufrago", victimId: b.id }));
+    await postPlay(req({ attackerId: b.id, cardId: "mano-de-garfio", victimId: c.id }));
+
+    await deleteTeam(req(), { params: Promise.resolve({ id: b.id }) });
+    game = await (await getState()).json();
+    expect(game.teams.map((t: { name: string }) => t.name)).toEqual(["A", "C"]);
+    // el efecto donde B era víctima se va; el que B le lanzó a C sigue corriendo
+    expect(game.effects.map((e: { victimId: string }) => e.victimId)).toEqual([c.id]);
+  });
+
+  it("borrar equipo limpia sus usos y su bonus", async () => {
+    await postSail(req());
     await postTeam(req({ name: "A" }));
     await postTeam(req({ name: "B" }));
     let game = await (await getState()).json();
     const [a, b] = game.teams;
-    await postPlay(req({ attackerId: a.id, cardId: "naufrago", victimId: b.id }));
+    // botín: B gasta la defensa y se lleva un bonus
+    await postPlay(req({ attackerId: a.id, cardId: "naufrago", victimId: b.id, defense: "botin" }));
+
     await deleteTeam(req(), { params: Promise.resolve({ id: b.id }) });
+    game = await loadGame();
+    expect(game.usages.map((u: { teamId: string }) => u.teamId)).toEqual([a.id]);
+    expect(game.bonus).toEqual({});
+  });
+
+  // Dos jurados registrando dentro del mismo round-trip: antes se perdía una jugada.
+  it("dos jugadas simultáneas no se pisan", async () => {
+    await postSail(req());
+    await postTeam(req({ name: "A" }));
+    await postTeam(req({ name: "B" }));
+    await postTeam(req({ name: "C" }));
+    await postTeam(req({ name: "D" }));
+    let game = await (await getState()).json();
+    const [a, b, c, d] = game.teams;
+
+    const [r1, r2] = await Promise.all([
+      postPlay(req({ attackerId: a.id, cardId: "naufrago", victimId: b.id })),
+      postPlay(req({ attackerId: c.id, cardId: "mano-de-garfio", victimId: d.id })),
+    ]);
+    expect([r1.status, r2.status]).toEqual([200, 200]);
+
     game = await (await getState()).json();
-    expect(game.teams.map((t: { name: string }) => t.name)).toEqual(["A"]);
-    expect(game.effects).toHaveLength(0);
+    expect(game.effects.map((e: { victimId: string }) => e.victimId).sort()).toEqual(
+      [b.id, d.id].sort(),
+    );
+    expect(game.usages).toHaveLength(2);
+  });
+
+  it("GET /api/state devuelve serverNow para el reloj del cliente", async () => {
+    const game = await (await getState()).json();
+    expect(Math.abs(Date.parse(game.serverNow) - Date.now())).toBeLessThan(5000);
   });
 
   it("GET /api/state filtra efectos expirados", async () => {

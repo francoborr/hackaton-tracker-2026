@@ -73,6 +73,8 @@ export function Wizard({ game, nowMs, onClose, onDone }: {
       const res = await mutate("/api/plays", "POST", body);
       if (res.ok) {
         onDone();
+      } else if (res.status === 401) {
+        setServerError("PIN inválido — recargá la página");
       } else {
         setServerError((await res.json()).error ?? "no se pudo registrar");
       }
@@ -93,11 +95,17 @@ export function Wizard({ game, nowMs, onClose, onDone }: {
   const ayudaBusy = (cardId: string) =>
     game.effects.some((e) => e.cardId === cardId && new Date(e.endsAt).getTime() > nowMs);
   const finalVictim = defense === "viento" ? redirect : target;
-  const victimCursed =
-    card?.type === "sabotaje" &&
-    ((target !== null && isCursed(target.id)) ||
-      (finalVictim !== null && isCursed(finalVictim.id)) ||
-      (defense === "kraken" && atk !== null && isCursed(atk.id)));
+  // Qué barco es el que ya está maldito, para poder nombrarlo en el aviso.
+  const cursedShip =
+    card?.type !== "sabotaje" ? null
+      : target !== null && isCursed(target.id) ? target
+      : finalVictim !== null && isCursed(finalVictim.id) ? finalVictim
+      : defense === "kraken" && atk !== null && isCursed(atk.id) ? atk
+      : null;
+  const victimCursed = cursedShip !== null;
+  // Con viento la maldición se va a otro barco: si no queda ninguno libre, no hay
+  // adónde redirigir.
+  const redirectables = game.teams.filter((t) => t.id !== target?.id && !isCursed(t.id));
 
   return (
     <div className="overlay open">
@@ -175,6 +183,12 @@ export function Wizard({ game, nowMs, onClose, onDone }: {
                   </button>
                 ))}
               </div>
+              {game.teams.filter((t) => t.id !== atk?.id).every((t) => isCursed(t.id)) && (
+                <p className="hintline">
+                  No hay barcos libres para atacar — esperá a que expire una maldición o
+                  terminala con la ✕.
+                </p>
+              )}
             </>
           )}
 
@@ -184,18 +198,27 @@ export function Wizard({ game, nowMs, onClose, onDone }: {
               <div className="chips">
                 {DEFENSES.map((d) => {
                   const krakenBlocked = d.key === "kraken" && atk !== null && isCursed(atk.id);
+                  const vientoBlocked = d.key === "viento" && redirectables.length === 0;
+                  const blocked = krakenBlocked || vientoBlocked;
                   return (
                     <button
                       key={d.key}
                       className="chip"
-                      disabled={krakenBlocked}
+                      disabled={blocked}
                       onClick={() => {
                         setDefense(d.key);
                         go(d.key === "viento" ? "redirect" : "confirm");
                       }}
                     >
-                      {d.name} {d.hint && <small>{krakenBlocked ? "☠ atacante maldito" : d.hint}</small>}
-                      {d.desc && !krakenBlocked && <Qmark title={d.name} body={d.desc} />}
+                      {d.name}{" "}
+                      {d.hint && (
+                        <small>
+                          {krakenBlocked ? "☠ atacante maldito"
+                            : vientoBlocked ? "☠ sin barcos libres"
+                            : d.hint}
+                        </small>
+                      )}
+                      {d.desc && !blocked && <Qmark title={d.name} body={d.desc} />}
                     </button>
                   );
                 })}
@@ -242,11 +265,15 @@ export function Wizard({ game, nowMs, onClose, onDone }: {
               {credits(game, atk.id, now) <= 0 && (
                 <div className="warn">⚠ {atk.name} no tiene cartas disponibles esta hora — podés registrar igual si el jurado lo avala.</div>
               )}
+              {card.type === "sabotaje" && defense && defense !== "no" && target &&
+                credits(game, target.id, now) <= 0 && (
+                <div className="warn">⚠ {target.name} no tiene cartas disponibles para la defensa — podés registrar igual si el jurado lo avala.</div>
+              )}
               {card.type === "ayuda" && ayudaBusy(card.id) && (
                 <div className="warn">⏳ {card.name} ya está en uso — esperá a que termine esa bendición.</div>
               )}
-              {victimCursed && (
-                <div className="warn">☠ Hay un barco que ya está bajo una maldición — solo puede sufrir una a la vez. No se puede registrar hasta que expire o la termines con la ✕.</div>
+              {cursedShip && (
+                <div className="warn">☠ {cursedShip.name} ya está bajo una maldición — solo puede sufrir una a la vez. No se puede registrar hasta que expire o la termines con la ✕.</div>
               )}
               {serverError && <div className="warn">⚠ {serverError}</div>}
             </>

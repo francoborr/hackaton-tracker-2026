@@ -1,34 +1,58 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Game } from "./game";
 
-export function useGame(): { game: Game | null; refresh: () => Promise<void> } {
+// El reloj de referencia es el del server: los teléfonos del jurado pueden estar
+// corridos y los countdowns (y los créditos por hora) tienen que coincidir con el
+// tablero proyectado.
+export function useGame(): {
+  game: Game | null;
+  nowMs: number | null;
+  refresh: () => Promise<void>;
+  failed: boolean;
+} {
   const [game, setGame] = useState<Game | null>(null);
+  const [nowMs, setNowMs] = useState<number | null>(null);
+  const [failed, setFailed] = useState(false);
+  const offsetRef = useRef(0);
+  const seqRef = useRef(0);
+
   const refresh = useCallback(async () => {
+    const seq = ++seqRef.current;
     try {
       const res = await fetch("/api/state", { cache: "no-store" });
-      if (res.ok) setGame(await res.json());
+      const doc = res.ok ? ((await res.json()) as Game & { serverNow?: string }) : null;
+      if (seq < seqRef.current) return; // llegó tarde: ya hay un poll más nuevo
+      if (!doc) {
+        setFailed(true);
+        return;
+      }
+      const { serverNow, ...rest } = doc;
+      if (serverNow) offsetRef.current = Date.parse(serverNow) - Date.now();
+      setGame(rest);
+      setFailed(false);
     } catch {
-      // sin red: reintenta en el próximo poll
+      if (seq === seqRef.current) setFailed(true); // sin red: reintenta en el próximo poll
     }
   }, []);
+
   useEffect(() => {
     refresh();
     const t = setInterval(refresh, 5000);
     return () => clearInterval(t);
   }, [refresh]);
-  return { game, refresh };
-}
 
-export function useNowMs(): number | null {
-  const [nowMs, setNowMs] = useState<number | null>(null);
+  // nowMs arranca en null para que el server y el cliente rindan lo mismo en la
+  // hidratación; después late cada segundo con el offset del server aplicado.
   useEffect(() => {
-    setNowMs(Date.now());
-    const t = setInterval(() => setNowMs(Date.now()), 1000);
+    const tick = () => setNowMs(Date.now() + offsetRef.current);
+    tick();
+    const t = setInterval(tick, 1000);
     return () => clearInterval(t);
   }, []);
-  return nowMs;
+
+  return { game, nowMs, refresh, failed };
 }
 
 export function getPin(): string {

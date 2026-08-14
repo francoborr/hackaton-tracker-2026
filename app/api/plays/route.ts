@@ -1,6 +1,6 @@
 import { resolvePlay, type PlayInput } from "@/lib/game";
 import { checkPin, unauthorized } from "@/lib/pin";
-import { loadGame, saveGame } from "@/lib/store";
+import { updateGame } from "@/lib/store";
 
 // Los únicos mensajes de resolvePlay que se le muestran al jurado; cualquier otra
 // falla (input que no es un objeto, bug) sale como "jugada inválida".
@@ -13,6 +13,9 @@ const DOMAIN_ERRORS = new Set([
   "el barco redirigido ya está bajo una maldición",
   "el atacante ya está bajo una maldición",
   "esa ayuda ya está en uso",
+  "ese barco ya no está en la flota",
+  "un barco no puede atacarse a sí mismo",
+  "la redirección debe ir a otro barco",
 ]);
 
 export async function POST(req: Request) {
@@ -25,14 +28,19 @@ export async function POST(req: Request) {
     return Response.json({ error: "cuerpo inválido" }, { status: 422 });
   }
 
-  const game = await loadGame();
-  let next;
   try {
-    next = resolvePlay(game, input, new Date(), () => crypto.randomUUID());
+    const next = await updateGame((game) =>
+      resolvePlay(game, input, new Date(), () => crypto.randomUUID()),
+    );
+    return Response.json(next);
   } catch (e) {
-    const message = e instanceof Error && DOMAIN_ERRORS.has(e.message) ? e.message : "jugada inválida";
-    return Response.json({ error: message }, { status: 422 });
+    const message = e instanceof Error ? e.message : "";
+    if (message === "conflicto de escritura") {
+      return Response.json({ error: "hubo un choque de escrituras — probá de nuevo" }, { status: 409 });
+    }
+    return Response.json(
+      { error: DOMAIN_ERRORS.has(message) ? message : "jugada inválida" },
+      { status: 422 },
+    );
   }
-  await saveGame(next);
-  return Response.json(next);
 }

@@ -7,23 +7,31 @@ import { mutate } from "@/lib/client";
 export function Fleet({ game, onChange }: { game: Game; onChange: () => void }) {
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   async function add(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = name.trim();
-    if (!trimmed) return;
-    const res = await mutate("/api/teams", "POST", { name: trimmed });
-    if (res.ok) {
-      setName("");
-      setError(null);
-      onChange();
-    } else {
-      setError((await res.json()).error ?? "no se pudo sumar el barco");
+    if (!trimmed || busy) return;
+    setBusy(true);
+    try {
+      const res = await mutate("/api/teams", "POST", { name: trimmed });
+      if (res.ok) {
+        setName("");
+        setError(null);
+        onChange();
+      } else {
+        setError((await res.json()).error ?? "no se pudo sumar el barco");
+      }
+    } catch {
+      setError("sin conexión — probá de nuevo");
+    } finally {
+      setBusy(false);
     }
   }
 
   async function remove(id: string, teamName: string) {
-    if (!confirm(`¿Quitar a ${teamName} de la flota?`)) return;
+    if (!confirm(`¿Quitar a ${teamName} de la flota? Se borra también su maldición activa y su historial de cartas.`)) return;
     try {
       const res = await mutate(`/api/teams/${id}`, "DELETE");
       if (res.status === 401) alert("PIN inválido — recargá la página");
@@ -40,8 +48,7 @@ export function Fleet({ game, onChange }: { game: Game; onChange: () => void }) 
           <div className="crow" key={t.id}>
             <b>{t.name}</b>
             <button
-              className="btn-x"
-              style={{ position: "static" }}
+              className="btn-x inline"
               title="Quitar barco"
               onClick={() => remove(t.id, t.name)}
             >
@@ -57,7 +64,9 @@ export function Fleet({ game, onChange }: { game: Game; onChange: () => void }) 
           placeholder="Nombre del nuevo barco…"
           maxLength={30}
         />
-        <button className="btn-ghost" type="submit">Sumar barco</button>
+        <button className="btn-ghost" type="submit" disabled={busy}>
+          {busy ? "Sumando…" : "Sumar barco"}
+        </button>
       </form>
       {error && <p className="hintline">⚠ {error}</p>}
       <p className="hintline">

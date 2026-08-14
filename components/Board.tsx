@@ -28,7 +28,7 @@ function Tile({ effect, game, nowMs, onEnd }: {
         <div className="atk">⚔ <b>{name(effect.attackerId)}</b> maldijo a</div>
       )}
       <div className="who">{name(effect.victimId)}</div>
-      <div className="what">{card?.name}</div>
+      <div className="what">{card?.name ?? effect.cardId}</div>
       <div className="desc">{card?.effect}</div>
       <div className="big">{fmt(leftMs)}</div>
       <div className="fuse">
@@ -40,7 +40,9 @@ function Tile({ effect, game, nowMs, onEnd }: {
 
 export function Board({ game, nowMs, onEnd }: { game: Game; nowMs: number; onEnd?: (id: string) => void }) {
   const active = game.effects.filter((e) => new Date(e.endsAt).getTime() > nowMs);
-  const curses = active.filter((e) => cardById(e.cardId)?.type === "sabotaje");
+  // Todo lo que no sea una bendición cuenta como maldición: si la carta salió del mazo
+  // el efecto igual tiene que verse (si no, bloquea a su víctima sin aparecer).
+  const curses = active.filter((e) => cardById(e.cardId)?.type !== "ayuda");
   const blessings = active.filter((e) => cardById(e.cardId)?.type === "ayuda");
 
   return (

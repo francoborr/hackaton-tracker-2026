@@ -18,6 +18,7 @@ export type Game = {
   effects: Effect[];
   usages: Usage[];
   bonus: Record<string, number>;
+  rev?: number; // versión del doc para el compare-and-set del store
 };
 
 export type Defense = "casco" | "viento" | "kraken" | "botin";
@@ -61,6 +62,9 @@ export function resolvePlay(game: Game, input: PlayInput, now: Date, id: () => s
   const card = cardById(input.cardId);
   if (!card || card.type === "defensa") throw new Error("carta inválida");
 
+  const has = (id: string) => game.teams.some((t) => t.id === id);
+  if (!has(input.attackerId)) throw new Error("ese barco ya no está en la flota");
+
   const g: Game = structuredClone(game);
   const at = now.toISOString();
   g.usages.push({ id: id(), teamId: input.attackerId, cardId: card.id, at });
@@ -79,12 +83,15 @@ export function resolvePlay(game: Game, input: PlayInput, now: Date, id: () => s
 
   const victimId = input.victimId;
   if (!victimId) throw new Error("falta la víctima");
+  if (victimId === input.attackerId) throw new Error("un barco no puede atacarse a sí mismo");
+  if (!has(victimId)) throw new Error("ese barco ya no está en la flota");
 
   // Un barco maldito no puede recibir otra maldición — regla dura, sin override.
-  // Solo cuentan los sabotajes: una bendición (ayuda) activa no bloquea nada.
+  // Solo las bendiciones (ayuda) dejan pasar: cualquier otra carta —incluso una que ya
+  // no esté en el mazo— cuenta como maldición.
   const cursed = (teamId: string) =>
     game.effects.some((e) =>
-      e.victimId === teamId && cardById(e.cardId)?.type === "sabotaje" && new Date(e.endsAt) > now
+      e.victimId === teamId && cardById(e.cardId)?.type !== "ayuda" && new Date(e.endsAt) > now
     );
   if (cursed(victimId)) throw new Error("la víctima ya está bajo una maldición");
 
@@ -101,6 +108,8 @@ export function resolvePlay(game: Game, input: PlayInput, now: Date, id: () => s
     g.effects.push(makeEffect(input.attackerId, victimId));
   } else if (defense === "viento") {
     if (!input.redirectId) throw new Error("falta el barco redirigido");
+    if (input.redirectId === victimId) throw new Error("la redirección debe ir a otro barco");
+    if (!has(input.redirectId)) throw new Error("ese barco ya no está en la flota");
     if (cursed(input.redirectId)) throw new Error("el barco redirigido ya está bajo una maldición");
     g.effects.push(makeEffect(victimId, input.redirectId));
   } else if (defense === "kraken") {

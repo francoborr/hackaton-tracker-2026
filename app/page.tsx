@@ -3,16 +3,20 @@
 import { Board } from "@/components/Board";
 import { Creditos } from "@/components/Creditos";
 import { Masthead } from "@/components/Masthead";
-import { useGame, useNowMs } from "@/lib/client";
+import { useGame } from "@/lib/client";
 
 export default function PublicBoard() {
-  const { game } = useGame();
-  const nowMs = useNowMs();
+  const { game, nowMs, failed } = useGame();
 
   return (
     <>
       <Masthead />
       <main className="wrap">
+        {game === null && (
+          <div className="calm">
+            {failed ? "Sin conexión con el navío — reintentando…" : "Cargando la travesía…"}
+          </div>
+        )}
         {game && nowMs !== null && (
           <>
             <h2>Maldiciones en curso</h2>

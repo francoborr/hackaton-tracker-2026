@@ -1,10 +1,11 @@
 import { checkPin, unauthorized } from "@/lib/pin";
-import { loadGame, saveGame } from "@/lib/store";
+import { updateGame } from "@/lib/store";
 
 export async function POST(req: Request) {
   if (!checkPin(req)) return unauthorized();
-  const game = await loadGame();
-  if (!game.startedAt) game.startedAt = new Date().toISOString();
-  await saveGame(game);
+  const game = await updateGame((g) => {
+    if (!g.startedAt) g.startedAt = new Date().toISOString();
+    return g;
+  });
   return Response.json(game);
 }

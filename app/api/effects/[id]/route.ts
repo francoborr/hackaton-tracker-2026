@@ -1,11 +1,12 @@
 import { checkPin, unauthorized } from "@/lib/pin";
-import { loadGame, saveGame } from "@/lib/store";
+import { updateGame } from "@/lib/store";
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   if (!checkPin(req)) return unauthorized();
   const { id } = await params;
-  const game = await loadGame();
-  game.effects = game.effects.filter((e) => e.id !== id);
-  await saveGame(game);
+  const game = await updateGame((g) => {
+    g.effects = g.effects.filter((e) => e.id !== id);
+    return g;
+  });
   return Response.json(game);
 }
