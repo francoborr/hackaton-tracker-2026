@@ -1,12 +1,13 @@
 :root {
   --ink: #100b07;
-  --panel: #1c140d;
+  --panel: #161616;
   --panel-2: #241a10;
-  --frame: #6e5227;
+  --frame: #fff;
   --frame-hi: #c9a45c;
   --gold: #e3bd6e;
+  --title: #fff;
   --parch: #ecdcba;
-  --parch-dim: #a8916a;
+  --parch-dim: rgba(255, 255, 255, .6);
   --plum: #5c2150;
   --plum-hi: #c77bb4;
   --ayuda: #2e6a56;
@@ -18,22 +19,40 @@
   --victima: #f7ecd4;
   --ember: #e0662a;
   --ember-hi: #ffb361;
-  --display: "Palatino Linotype", Palatino, "Book Antiqua", "Iowan Old Style", Georgia, serif;
-  --body: Georgia, "Times New Roman", serif;
+  --display: var(--font-pirata), "Palatino Linotype", Palatino, "Book Antiqua", "Iowan Old Style", Georgia, serif;
+  --body: var(--font-noto-serif), Georgia, "Times New Roman", serif;
 }
 
 * { box-sizing: border-box; }
 
 body {
+  position: relative;
   background:
-    radial-gradient(ellipse 120% 70% at 50% -10%, #2a1d10 0%, transparent 60%),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0.05 0 0 0 0 0.03 0 0 0 0 0.01 0 0 0 0.35 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse 120% 70% at 50% -10%, rgba(42, 29, 16, .55) 0%, transparent 60%),
+    url("/bg.jpg") center top / cover fixed no-repeat,
     var(--ink);
   color: var(--parch);
   font-family: var(--body);
   margin: 0;
   min-height: 100vh;
   padding: 0 1.25rem 4rem;
+}
+/* Emblema al costado: fixed y detrás del contenido (z-index negativo, que igual queda
+   arriba del fondo porque el background de body se propaga al canvas). El ancho es el
+   sobrante a la derecha de la columna de 860px, así nunca la pisa; abajo de ~900px de
+   viewport el calc se clampea a 0 y el emblema desaparece. */
+body::before {
+  content: "";
+  position: fixed;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  width: min(420px, calc((100vw - 900px) / 2));
+  aspect-ratio: 441 / 709;
+  background: url("/mimipirate.png") center / contain no-repeat;
+  opacity: .8;
+  pointer-events: none;
+  z-index: -1;
 }
 
 /* ============ header ============ */
@@ -48,16 +67,12 @@ body {
   text-transform: uppercase;
   color: var(--parch-dim);
 }
-.masthead h1 {
-  font-family: var(--display);
-  font-variant: small-caps;
-  font-weight: 400;
-  font-size: clamp(1.9rem, 4.5vw, 3rem);
-  letter-spacing: .08em;
-  margin: .35rem 0 .2rem;
-  color: var(--gold);
-  text-shadow: 0 1px 0 #000, 0 0 24px rgba(227, 189, 110, .25);
-  text-wrap: balance;
+.hero-logo {
+  display: block;
+  width: min(460px, 90%);
+  height: auto;
+  margin: .5rem auto .2rem;
+  filter: drop-shadow(0 2px 10px rgba(0, 0, 0, .6));
 }
 .masthead .rule {
   width: min(420px, 70%);
@@ -94,40 +109,39 @@ button:focus-visible, input:focus-visible {
   justify-content: space-between;
   gap: 1rem;
   border: 1px solid var(--frame);
-  background: linear-gradient(180deg, var(--panel-2), var(--panel));
+  background: var(--panel);
   padding: .8rem 1.1rem;
   margin-bottom: 2rem;
 }
 .hora {
   font-family: var(--display);
-  font-variant: small-caps;
+  text-transform: uppercase;
   letter-spacing: .12em;
   font-size: 1.05rem;
-  color: var(--gold);
+  color: var(--title);
 }
 .btn-main {
   font-family: var(--display);
-  font-variant: small-caps;
-  letter-spacing: .12em;
-  font-size: 1rem;
-  color: #1a1206;
-  background: linear-gradient(180deg, #ecc87c, #b08c46);
-  border: 1px solid #f0d79c;
-  box-shadow: 0 2px 0 #4a3617, 0 4px 14px rgba(0,0,0,.5);
-  padding: .6rem 1.4rem;
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  font-size: 1.05rem;
+  color: #fff;
+  background: #141414;
+  border: 1px solid var(--frame);
+  padding: .75rem 1.8rem;
   cursor: pointer;
 }
-.btn-main:hover { filter: brightness(1.08); }
-.btn-main:disabled { opacity: .5; cursor: not-allowed; filter: none; }
+.btn-main:hover { background: #1e1e1e; }
+.btn-main:disabled { opacity: .45; cursor: not-allowed; background: #141414; }
 
 /* ============ section titles ============ */
 h2 {
   font-family: var(--display);
-  font-variant: small-caps;
+  text-transform: uppercase;
   font-weight: 400;
   letter-spacing: .1em;
   font-size: 1.25rem;
-  color: var(--gold);
+  color: var(--title);
   border-bottom: 1px solid var(--frame);
   padding-bottom: .4rem;
   margin: 2.4rem 0 1.1rem;
@@ -176,7 +190,7 @@ h2 {
 .btile.bless .atk b { color: var(--ayuda-hi); }
 .btile .who {
   font-family: var(--display);
-  font-variant: small-caps;
+  text-transform: uppercase;
   font-size: 1.5rem;
   color: var(--victima);
   line-height: 1.1;
@@ -185,13 +199,14 @@ h2 {
 }
 .btile .what {
   font-family: var(--display);
-  font-variant: small-caps;
+  text-transform: uppercase;
   color: var(--plum-hi);
   font-size: 1rem;
 }
 .btile .desc { font-size: .74rem; color: var(--parch-dim); margin-bottom: .5rem; }
 .btile .big {
   font-family: var(--display);
+  text-transform: uppercase;
   font-size: 2.1rem;
   color: var(--ember-hi);
   font-variant-numeric: tabular-nums;
@@ -246,9 +261,9 @@ h2 {
 .calm {
   text-align: center;
   font-style: italic;
-  color: var(--parch-dim);
+  color: #fff;
   padding: 1.6rem 0;
-  border: 1px dashed rgba(110, 82, 39, .5);
+  border: 1px dashed var(--frame);
 }
 
 /* ============ cartas disponibles: lista vertical ============ */
@@ -264,18 +279,18 @@ h2 {
   justify-content: space-between;
   align-items: baseline;
   gap: 1rem;
-  border: 1px solid rgba(110,82,39,.5);
+  border: 1px solid var(--frame);
   background: rgba(255,255,255,.015);
   padding: .55rem .95rem;
 }
 .crow b {
   font-weight: 400;
-  font-family: var(--display);
-  font-variant: small-caps;
+  font-family: var(--body);
   font-size: 1.1rem;
+  color: #fff;
 }
 .crow .on { color: var(--gold); letter-spacing: .2em; }
-.crow .none { color: var(--parch-dim); font-style: italic; font-size: .8rem; }
+.crow .none { color: #fff; font-style: italic; font-size: .8rem; }
 .fleet-list { display: flex; flex-direction: column; gap: .45rem; }
 .addrow { margin-top: .2rem; }
 .addrow input {
@@ -361,7 +376,7 @@ h2 {
 .crumb b { color: var(--gold); font-weight: 400; }
 .wizq {
   font-family: var(--display);
-  font-variant: small-caps;
+  text-transform: uppercase;
   font-size: 1.15rem;
   color: var(--parch);
   text-align: center;
@@ -419,7 +434,7 @@ h2 {
 }
 .resumen b {
   font-family: var(--display);
-  font-variant: small-caps;
+  text-transform: uppercase;
   font-weight: 400;
   font-size: 1.05rem;
   color: var(--gold);
@@ -434,28 +449,28 @@ h2 {
 .modal-actions .right { display: flex; gap: .7rem; margin-left: auto; }
 .btn-ghost {
   font-family: var(--display);
-  font-variant: small-caps;
+  text-transform: uppercase;
   letter-spacing: .1em;
-  background: none;
-  border: 1px solid var(--frame);
-  color: var(--parch-dim);
-  padding: .55rem 1.1rem;
+  background: #141414;
+  border: 1px solid rgba(255, 255, 255, .65);
+  color: rgba(255, 255, 255, .75);
+  padding: .6rem 1.3rem;
   cursor: pointer;
 }
-.btn-ghost:hover { color: var(--parch); }
+.btn-ghost:hover { color: #fff; border-color: #fff; }
 
 /* ============ reset travesía ============ */
 .btn-danger {
   font-family: var(--display);
-  font-variant: small-caps;
+  text-transform: uppercase;
   letter-spacing: .1em;
-  background: none;
-  border: 1px solid rgba(224, 102, 42, .5);
+  background: #141414;
+  border: 1px solid var(--ember-hi);
   color: var(--ember-hi);
-  padding: .55rem 1.1rem;
+  padding: .6rem 1.3rem;
   cursor: pointer;
 }
-.btn-danger:hover { background: rgba(224, 102, 42, .12); }
+.btn-danger:hover { background: rgba(224, 102, 42, .15); }
 .danger-zone {
   margin-top: 5rem;
   padding-top: 1.5rem;
@@ -496,6 +511,7 @@ h2 {
   color: var(--parch-dim);
   font-size: .62rem;
   font-family: var(--display);
+  text-transform: uppercase;
   text-align: center;
   cursor: help;
   vertical-align: 1px;
@@ -525,7 +541,7 @@ h2 {
 .pop b {
   display: block;
   font-family: var(--display);
-  font-variant: small-caps;
+  text-transform: uppercase;
   font-weight: 400;
   color: var(--gold);
   font-size: .82rem;

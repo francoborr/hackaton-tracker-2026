@@ -5,7 +5,8 @@ juega cada equipo; el tablero muestra las maldiciones en curso con countdown y e
 automática.
 
 - **[SPEC.md](SPEC.md)** — reglas, modelo de datos, API y stack (spec-driven development).
-- **[docs/mockup.html](docs/mockup.html)** — mockup navegable aprobado, fuente de verdad visual.
+- **[docs/mockup.html](docs/mockup.html)** — mockup navegable: referencia de flujo y estructura.
+  El tema visual lo manda el Figma del rediseño (acceso: Javi), no este archivo.
 
 ## Correr local
 

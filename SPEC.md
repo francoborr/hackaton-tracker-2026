@@ -4,8 +4,11 @@ Tracker de cartas de poder para la Hackathon 2026 de Mimiquate (7 de septiembre,
 El jurado registra qué cartas juega cada equipo y la app muestra qué equipos están bajo un efecto,
 con expiración automática.
 
-El diseño de referencia es `docs/mockup.html` (abrir en el navegador): es la fuente de verdad
-visual y de flujo. Esta spec es la fuente de verdad de reglas y arquitectura.
+La fuente de verdad **visual** es el Figma del rediseño (pedirle acceso a Javi): paleta blanco
+y negro sobre foto de fondo, con el emblema pirata al costado. `docs/mockup.html` sigue siendo
+la referencia de **flujo y estructura** (qué secciones hay, qué pasos tiene el wizard), pero su
+tema —madera quemada, pergamino, oro, small caps— quedó viejo con el rediseño: no copiar colores
+ni tipografías de ahí. Esta spec es la fuente de verdad de reglas y arquitectura.
 
 ## Usuarios y vistas
 
@@ -177,8 +180,9 @@ veces; después, 409). Sin websockets: los clientes hacen **polling de `GET /api
 - **Next.js (App Router) + TypeScript**, deploy en **Vercel**.
 - Estado en **Upstash Redis** (integración KV del marketplace de Vercel), acceso vía
   `@upstash/redis`.
-- Sin librería de UI: CSS propio siguiendo el mockup (tema oscuro único: madera quemada,
-  pergamino, oro; serif tipo Palatino en small caps; mecha con brasa como countdown).
+- Sin librería de UI: CSS propio siguiendo el Figma (tema oscuro único: blanco y negro sobre
+  foto de fondo; Pirata One para títulos y Noto Serif para el cuerpo, vía `next/font`; mecha
+  con brasa como countdown). Todos los colores salen de los tokens de `app/globals.css`.
 - Env vars: `JURY_PIN`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`.
 
 ## Fuera de alcance
