@@ -7,7 +7,7 @@
   --gold: #e3bd6e;
   --title: #fff;
   --parch: #ecdcba;
-  --parch-dim: #fff;
+  --parch-dim: rgba(255, 255, 255, .6);
   --plum: #5c2150;
   --plum-hi: #c77bb4;
   --ayuda: #2e6a56;
@@ -37,17 +37,22 @@ body {
   min-height: 100vh;
   padding: 0 1.25rem 4rem;
 }
+/* Emblema al costado: fixed y detrás del contenido (z-index negativo, que igual queda
+   arriba del fondo porque el background de body se propaga al canvas). El ancho es el
+   sobrante a la derecha de la columna de 860px, así nunca la pisa; abajo de ~900px de
+   viewport el calc se clampea a 0 y el emblema desaparece. */
 body::before {
   content: "";
-  position: absolute;
+  position: fixed;
   top: 50%;
   right: 0;
   transform: translateY(-50%);
-  width: min(420px, 30vw);
+  width: min(420px, calc((100vw - 900px) / 2));
   aspect-ratio: 441 / 709;
   background: url("/mimipirate.png") center / contain no-repeat;
   opacity: .8;
   pointer-events: none;
+  z-index: -1;
 }
 
 /* ============ header ============ */
