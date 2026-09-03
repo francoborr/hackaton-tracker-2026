@@ -6,10 +6,10 @@ import { Creditos } from "@/components/Creditos";
 import { Fleet } from "@/components/Fleet";
 import { Masthead } from "@/components/Masthead";
 import { PinGate, usePinVerified } from "@/components/PinGate";
+import { Travesia } from "@/components/Travesia";
 import { Wizard } from "@/components/Wizard";
 import { cardById } from "@/lib/cards";
 import { mutate, useGame } from "@/lib/client";
-import { currentHour } from "@/lib/game";
 
 export default function Jurado() {
   const [pinOk, markVerified] = usePinVerified();
@@ -91,7 +91,7 @@ export default function Jurado() {
           <>
             <div className="toolbar">
               {game.startedAt ? (
-                <span className="hora">⚓ Hora {currentHour(game, new Date(nowMs))} de travesía</span>
+                <Travesia game={game} nowMs={nowMs} />
               ) : (
                 <button className="btn-main" onClick={sail}>⚓ Zarpar</button>
               )}

@@ -53,6 +53,11 @@ export function currentHour(game: Game, now: Date): number {
   return Math.floor(ms / 3_600_000) + 1;
 }
 
+export function nextCardAt(game: Game, now: Date): Date | null {
+  if (!game.startedAt) return null;
+  return new Date(new Date(game.startedAt).getTime() + currentHour(game, now) * 3_600_000);
+}
+
 export function credits(game: Game, teamId: string, now: Date): number {
   const used = game.usages.filter((u) => u.teamId === teamId).length;
   return currentHour(game, now) + (game.bonus[teamId] ?? 0) - used;
