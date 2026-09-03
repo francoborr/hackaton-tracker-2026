@@ -51,8 +51,10 @@ Secciones (ver mockup):
   el wizard deshabilita los barcos malditos como objetivo/redirección (y el Kraken si el
   atacante está maldito). Para desbloquear: esperar a que expire o terminarla con la ✕. Del lado
   del que juega no hay límite: un equipo puede tener varias jugadas activas si acumuló créditos.
-- **Inicio del evento**: la vista jurado muestra "Hora N de travesía". Antes de arrancar hay un
-  botón "Zarpar" que fija `startedAt` (único elemento no presente en el mockup).
+- **Inicio del evento**: ambas vistas muestran "Hora N de travesía" más la hora de zarpe y a qué
+  hora (con countdown) se entrega la próxima carta. En la vista jurado, antes de arrancar hay un
+  botón "Zarpar" que fija `startedAt` (único elemento no presente en el mockup); el tablero
+  público muestra "La flota aún no zarpó".
 - Las cartas son transferibles entre equipos fuera de la app: **no se trackea inventario**, solo
   usos y efectos.
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  activeEffects, credits, currentHour, emptyGame, resolvePlay, type Game,
+  activeEffects, credits, currentHour, emptyGame, nextCardAt, resolvePlay, type Game,
 } from "./game";
 
 const NOW = new Date("2026-09-07T14:00:00Z");
@@ -281,5 +281,22 @@ describe("resolvePlay", () => {
     expect(() => resolvePlay(baseGame(), { attackerId: "t1", cardId: "nope" }, NOW, seq())).toThrow();
     expect(() => resolvePlay(baseGame(), { attackerId: "t1", cardId: "casco-blindado" }, NOW, seq())).toThrow();
     expect(() => resolvePlay(baseGame(), { attackerId: "t1", cardId: "naufrago" }, NOW, seq())).toThrow();
+  });
+});
+
+describe("nextCardAt", () => {
+  it("es null antes de zarpar", () => {
+    expect(nextCardAt(emptyGame(), NOW)).toBeNull();
+  });
+
+  it("apunta al próximo límite de hora desde el zarpe", () => {
+    const g = baseGame(); // zarpe 12:00
+    expect(nextCardAt(g, new Date("2026-09-07T12:00:01Z"))).toEqual(new Date("2026-09-07T13:00:00Z"));
+    expect(nextCardAt(g, new Date("2026-09-07T14:59:59Z"))).toEqual(new Date("2026-09-07T15:00:00Z"));
+  });
+
+  it("en el límite exacto la carta recién entregada ya corrió: apunta a la siguiente", () => {
+    const g = baseGame();
+    expect(nextCardAt(g, NOW)).toEqual(new Date("2026-09-07T15:00:00Z"));
   });
 });

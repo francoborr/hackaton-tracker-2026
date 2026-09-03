@@ -113,6 +113,7 @@ button:focus-visible, input:focus-visible {
   padding: .8rem 1.1rem;
   margin-bottom: 2rem;
 }
+.toolbar.solo { justify-content: center; text-align: center; }
 .hora {
   font-family: var(--display);
   text-transform: uppercase;
@@ -120,6 +121,17 @@ button:focus-visible, input:focus-visible {
   font-size: 1.05rem;
   color: var(--title);
 }
+.travesia {
+  display: flex;
+  flex-direction: column;
+  gap: .15rem;
+}
+.travesia-datos {
+  font-size: .8rem;
+  font-style: italic;
+  color: var(--parch-dim);
+}
+.travesia-datos b { color: var(--gold); font-weight: 400; font-style: normal; font-variant-numeric: tabular-nums; }
 .btn-main {
   font-family: var(--display);
   text-transform: uppercase;
