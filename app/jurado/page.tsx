@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Board } from "@/components/Board";
-import { Creditos } from "@/components/Creditos";
 import { Fleet } from "@/components/Fleet";
 import { Masthead } from "@/components/Masthead";
 import { PinGate, usePinVerified } from "@/components/PinGate";
@@ -106,9 +105,6 @@ export default function Jurado() {
 
             <h2>Maldiciones en curso</h2>
             <Board game={game} nowMs={nowMs} onEnd={endEffect} />
-
-            <h2>Cartas disponibles por barco</h2>
-            <Creditos game={game} nowMs={nowMs} />
 
             <h2>La flota</h2>
             <Fleet game={game} onChange={refresh} />

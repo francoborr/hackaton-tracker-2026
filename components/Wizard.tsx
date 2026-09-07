@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { CARDS, type Card } from "@/lib/cards";
-import { credits, type Defense, type Game, type Team } from "@/lib/game";
+import { type Defense, type Game, type Team } from "@/lib/game";
 import { mutate } from "@/lib/client";
 
 type Step = "atk" | "card" | "target" | "def" | "redirect" | "confirm";
@@ -85,7 +85,6 @@ export function Wizard({ game, nowMs, onClose, onDone }: {
     }
   }
 
-  const now = new Date(nowMs);
   // Mismo criterio que el server: todo lo que no sea bendición maldice, incluso una carta
   // que ya no esté en el mazo (si no, el chip queda habilitado y el registro sale 422).
   const isCursed = (teamId: string) =>
@@ -96,8 +95,6 @@ export function Wizard({ game, nowMs, onClose, onDone }: {
     );
   const ayudaBusy = (cardId: string) =>
     game.effects.some((e) => e.cardId === cardId && new Date(e.endsAt).getTime() > nowMs);
-  // Sin crédito no se juega nada: ni atacar, ni bendecirse, ni defenderse.
-  const broke = (teamId: string) => credits(game, teamId, now) <= 0;
   const finalVictim = defense === "viento" ? redirect : target;
   // Qué barco es el que ya está maldito, para poder nombrarlo en el aviso.
   const cursedShip =
@@ -127,19 +124,12 @@ export function Wizard({ game, nowMs, onClose, onDone }: {
                   <button
                     key={t.id}
                     className="chip"
-                    disabled={broke(t.id)}
                     onClick={() => { setAtk(t); go("card"); }}
                   >
-                    {t.name} {broke(t.id) && <small>⚓ sin cartas</small>}
+                    {t.name}
                   </button>
                 ))}
               </div>
-              {game.teams.length > 0 && game.teams.every((t) => broke(t.id)) && (
-                <p className="hintline">
-                  Ningún barco tiene cartas disponibles
-                  {game.startedAt ? " — esperá a la próxima hora." : " — todavía no zarparon."}
-                </p>
-              )}
             </>
           )}
 
@@ -217,9 +207,7 @@ export function Wizard({ game, nowMs, onClose, onDone }: {
                 {DEFENSES.map((d) => {
                   const krakenBlocked = d.key === "kraken" && atk !== null && isCursed(atk.id);
                   const vientoBlocked = d.key === "viento" && redirectables.length === 0;
-                  // Defenderse gasta una carta: sin crédito, la única opción es "No".
-                  const brokeBlocked = d.key !== "no" && target !== null && broke(target.id);
-                  const blocked = krakenBlocked || vientoBlocked || brokeBlocked;
+                  const blocked = krakenBlocked || vientoBlocked;
                   return (
                     <button
                       key={d.key}
@@ -233,8 +221,7 @@ export function Wizard({ game, nowMs, onClose, onDone }: {
                       {d.name}{" "}
                       {d.hint && (
                         <small>
-                          {brokeBlocked ? "⚓ sin cartas"
-                            : krakenBlocked ? "☠ atacante maldito"
+                          {krakenBlocked ? "☠ atacante maldito"
                             : vientoBlocked ? "☠ sin barcos libres"
                             : d.hint}
                         </small>
@@ -283,12 +270,6 @@ export function Wizard({ game, nowMs, onClose, onDone }: {
                   </>
                 )}
               </div>
-              {broke(atk.id) && (
-                <div className="warn">⚓ {atk.name} no tiene cartas disponibles — no puede jugar hasta la próxima hora.</div>
-              )}
-              {card.type === "sabotaje" && defense && defense !== "no" && target && broke(target.id) && (
-                <div className="warn">⚓ {target.name} no tiene cartas disponibles — no puede defenderse.</div>
-              )}
               {card.type === "ayuda" && ayudaBusy(card.id) && (
                 <div className="warn">⏳ {card.name} ya está en uso — esperá a que termine esa bendición.</div>
               )}
@@ -316,9 +297,7 @@ export function Wizard({ game, nowMs, onClose, onDone }: {
                   disabled={
                     sending ||
                     victimCursed ||
-                    (card?.type === "ayuda" && ayudaBusy(card.id)) ||
-                    (atk !== null && broke(atk.id)) ||
-                    (defense !== null && defense !== "no" && target !== null && broke(target.id))
+                    (card?.type === "ayuda" && ayudaBusy(card.id))
                   }
                 >
                   {sending ? "Registrando…" : "Registrar"}
