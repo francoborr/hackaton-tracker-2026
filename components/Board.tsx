@@ -29,7 +29,7 @@ function Tile({ effect, game, nowMs, onEnd }: {
         {bless ? (
           <div className="atk">🕊 bendición para</div>
         ) : (
-          <div className="atk">⚔ <b>{name(effect.attackerId)}</b> maldijo a</div>
+          <div className="atk">⚔ maldición sobre</div>
         )}
         <div className="who">{name(effect.victimId)}</div>
         <div className="what">{card?.name ?? effect.cardId}</div>
