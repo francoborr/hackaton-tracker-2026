@@ -38,6 +38,9 @@ const slackTime = (d: Date) =>
 /**
  * Arma el mensaje de una jugada ya registrada: título según lo que pasó, los datos en
  * dos columnas, el arte de la carta y el link al tablero.
+ *
+ * Nunca nombra a quien lanzó el sabotaje: si la víctima se entera, se venga. Sí nombra
+ * a la tripulación que usa una carta de ayuda, que no le hace daño a nadie.
  */
 export function playMessage(game: Game, input: PlayInput, now: Date, boardUrl: string): SlackMessage {
   const card = cardById(input.cardId);
@@ -67,18 +70,16 @@ export function playMessage(game: Game, input: PlayInput, now: Date, boardUrl: s
   } else if (input.defense === "casco") {
     header = "🛡️ Sabotaje bloqueado";
     fields = [
-      field("Atacante", attacker),
       field("Víctima", victim),
       field("Carta", card.name),
       field("Defensa", defenseName),
       field("Resultado", "Sin efecto — se gastan las dos cartas"),
     ];
-    text = `${victim} bloqueó ${card.name} de ${attacker}`;
+    text = `${victim} bloqueó ${card.name}`;
     ends = null;
   } else if (input.defense === "viento") {
     header = "🌀 Sabotaje redirigido";
     fields = [
-      field("Atacante", attacker),
       field("Víctima", victim),
       field("Carta", card.name),
       field("Defensa", defenseName),
@@ -89,18 +90,16 @@ export function playMessage(game: Game, input: PlayInput, now: Date, boardUrl: s
   } else if (input.defense === "kraken") {
     header = "🐙 Sabotaje espejado";
     fields = [
-      field("Atacante", attacker),
       field("Víctima", victim),
       field("Carta", card.name),
       field("Defensa", defenseName),
-      field("La sufren", `${attacker} y ${victim}`),
+      field("La sufren", `${victim} y quien la lanzó`),
       field("Duración", duration),
     ];
-    text = `${card.name} la sufren ${attacker} y ${victim}`;
+    text = `${card.name} la sufren ${victim} y quien la lanzó`;
   } else if (input.defense === "botin") {
     header = "🎁 Sabotaje con botín";
     fields = [
-      field("Atacante", attacker),
       field("Víctima", victim),
       field("Carta", card.name),
       field("Defensa", defenseName),
@@ -111,13 +110,12 @@ export function playMessage(game: Game, input: PlayInput, now: Date, boardUrl: s
   } else {
     header = "⚔️ Sabotaje jugado";
     fields = [
-      field("Atacante", attacker),
       field("Víctima", victim),
       field("Carta", card.name),
       field("Duración", duration),
       field("Efecto", card.effect),
     ];
-    text = `${attacker} le jugó ${card.name} a ${victim}`;
+    text = `${victim} sufre ${card.name}`;
   }
 
   const link = `<${boardUrl}|Ver el tablero>`;

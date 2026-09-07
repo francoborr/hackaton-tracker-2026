@@ -161,7 +161,9 @@ describe("flujo de juego", () => {
     expect(res.status).toBe(200);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
-    expect(body.text).toContain("Barbanegra");
+    expect(body.text).toContain("La Perla Negra");
+    // el atacante no viaja en el mensaje: si la víctima lo sabe, se venga
+    expect(JSON.stringify(body)).not.toContain("Barbanegra");
     expect(body.blocks[0].text.text).toBe("⚔️ Sabotaje jugado");
 
     vi.unstubAllGlobals();

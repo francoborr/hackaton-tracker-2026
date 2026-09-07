@@ -41,14 +41,27 @@ describe("playMessage", () => {
     );
     expect(header(blocks)).toBe("⚔️ Sabotaje jugado");
     expect(fields(blocks)).toMatchObject({
-      Atacante: "Barbanegra",
       Víctima: "La Perla Negra",
       Carta: "Mano de garfio",
       Duración: "10 min",
       Efecto: "Escriben con una mano",
     });
-    expect(text).toContain("Barbanegra");
     expect(text).toContain("La Perla Negra");
+  });
+
+  // Si la víctima sabe quién le pegó, se venga: el atacante no va en el mensaje.
+  it("no nombra al atacante en ninguna variante de sabotaje", () => {
+    const defenses = [undefined, "casco", "viento", "kraken", "botin"] as const;
+    for (const defense of defenses) {
+      const { blocks, text } = playMessage(
+        game(),
+        { attackerId: "t1", cardId: "mano-de-garfio", victimId: "t2", defense, redirectId: "t3" },
+        NOW, URL_BASE,
+      );
+      expect(fields(blocks).Atacante).toBeUndefined();
+      expect(JSON.stringify(blocks)).not.toContain("Barbanegra");
+      expect(text).not.toContain("Barbanegra");
+    }
   });
 
   it("pone el arte de la carta y el link al tablero", () => {
@@ -101,7 +114,7 @@ describe("playMessage", () => {
       NOW, URL_BASE,
     );
     expect(header(blocks)).toBe("🐙 Sabotaje espejado");
-    expect(fields(blocks)["La sufren"]).toBe("Barbanegra y La Perla Negra");
+    expect(fields(blocks)["La sufren"]).toBe("La Perla Negra y quien la lanzó");
   });
 
   it("botín: suma la compensación", () => {
@@ -133,9 +146,9 @@ describe("playMessage", () => {
 
   it("un barco borrado de la flota no rompe el mensaje", () => {
     const { blocks } = playMessage(
-      game(), { attackerId: "fantasma", cardId: "naufrago", victimId: "t2" }, NOW, URL_BASE,
+      game(), { attackerId: "t1", cardId: "naufrago", victimId: "fantasma" }, NOW, URL_BASE,
     );
-    expect(fields(blocks).Atacante).toBe("¿?");
+    expect(fields(blocks).Víctima).toBe("¿?");
   });
 });
 
