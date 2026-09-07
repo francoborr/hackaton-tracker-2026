@@ -63,17 +63,18 @@ export function credits(game: Game, teamId: string, now: Date): number {
   return currentHour(game, now) + (game.bonus[teamId] ?? 0) - used;
 }
 
+/**
+ * Registra una jugada. No hay límite de cartas por barco: la última hora es free for all,
+ * así que `credits` quedó como dato informativo y no bloquea nada. Las dos reglas duras que
+ * siguen en pie son que una víctima no puede recibir dos maldiciones a la vez y que cada
+ * carta de ayuda es exclusiva mientras corre.
+ */
 export function resolvePlay(game: Game, input: PlayInput, now: Date, id: () => string): Game {
   const card = cardById(input.cardId);
   if (!card || card.type === "defensa") throw new Error("carta inválida");
 
   const has = (id: string) => game.teams.some((t) => t.id === id);
   if (!has(input.attackerId)) throw new Error("ese barco ya no está en la flota");
-
-  // Sin crédito no se juega: ni atacar, ni bendecirse, ni defenderse. Regla dura.
-  if (credits(game, input.attackerId, now) <= 0) {
-    throw new Error("el barco no tiene cartas disponibles");
-  }
 
   const g: Game = structuredClone(game);
   const at = now.toISOString();
@@ -112,9 +113,6 @@ export function resolvePlay(game: Game, input: PlayInput, now: Date, id: () => s
 
   const defense = input.defense;
   if (defense && !Object.hasOwn(DEFENSE_CARD, defense)) throw new Error("defensa inválida");
-  if (defense && credits(game, victimId, now) <= 0) {
-    throw new Error("el barco no tiene cartas disponibles para defenderse");
-  }
   if (defense) g.usages.push({ id: id(), teamId: victimId, cardId: DEFENSE_CARD[defense], at });
 
   if (!defense) {

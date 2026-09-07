@@ -163,44 +163,24 @@ describe("resolvePlay", () => {
     ).toThrow("defensa inválida");
   });
 
-  it("rechaza jugar sin cartas disponibles", () => {
+  // Free for all: los créditos quedaron como dato informativo, no bloquean nada.
+  it("no hay tope de cartas por barco", () => {
     const g = baseGame();
-    // 3 horas de travesía, 3 usos: t1 se queda sin cartas
-    for (const n of [1, 2, 3]) {
+    // 3 horas de travesía y 5 usos ya registrados: con la regla vieja esto bloqueaba
+    for (const n of [1, 2, 3, 4, 5]) {
       g.usages.push({ id: `u${n}`, teamId: "t1", cardId: "naufrago", at: "x" });
     }
-    expect(() => resolvePlay(g, { attackerId: "t1", cardId: "naufrago", victimId: "t2" }, NOW, seq()))
-      .toThrow("no tiene cartas disponibles");
-    expect(() => resolvePlay(g, { attackerId: "t1", cardId: "senal-de-humo" }, NOW, seq()))
-      .toThrow("no tiene cartas disponibles");
-    // el resto de la flota sigue pudiendo jugar
-    expect(resolvePlay(g, { attackerId: "t2", cardId: "naufrago", victimId: "t1" }, NOW, seq()).effects)
-      .toHaveLength(1);
-  });
-
-  it("rechaza defenderse sin cartas disponibles", () => {
-    const g = baseGame();
-    for (const n of [1, 2, 3]) {
-      g.usages.push({ id: `u${n}`, teamId: "t1", cardId: "naufrago", at: "x" });
-    }
-    expect(() => resolvePlay(
-      g,
-      { attackerId: "t2", cardId: "naufrago", victimId: "t1", defense: "casco" },
-      NOW, seq(),
-    )).toThrow("no tiene cartas disponibles para defenderse");
-    // sin defensa el ataque sí entra
-    expect(resolvePlay(g, { attackerId: "t2", cardId: "naufrago", victimId: "t1" }, NOW, seq()).effects)
-      .toHaveLength(1);
-  });
-
-  it("el bonus del botín habilita a jugar de nuevo", () => {
-    const g = baseGame();
-    for (const n of [1, 2, 3]) {
-      g.usages.push({ id: `u${n}`, teamId: "t1", cardId: "naufrago", at: "x" });
-    }
-    g.bonus["t1"] = 1;
+    expect(credits(g, "t1", NOW)).toBeLessThan(0);
     expect(resolvePlay(g, { attackerId: "t1", cardId: "naufrago", victimId: "t2" }, NOW, seq()).effects)
       .toHaveLength(1);
+    expect(resolvePlay(g, { attackerId: "t1", cardId: "senal-de-humo" }, NOW, seq()).effects)
+      .toHaveLength(1);
+    // y también puede defenderse en rojo: el casco bloquea y se registran los dos usos
+    const defendido = resolvePlay(
+      g, { attackerId: "t2", cardId: "naufrago", victimId: "t1", defense: "casco" }, NOW, seq(),
+    );
+    expect(defendido.effects).toHaveLength(0);
+    expect(defendido.usages).toHaveLength(7);
   });
 
   it("rechaza sabotear a un barco que ya está maldito", () => {

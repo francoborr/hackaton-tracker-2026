@@ -123,27 +123,23 @@ describe("flujo de juego", () => {
     expect(game.usages).toHaveLength(1); // terminar no devuelve el crédito
   });
 
-  it("rechaza con 422 la jugada de un barco sin cartas, sin importar el PIN", async () => {
+  // Free for all: en la última hora ya no hay una carta por hora que respetar.
+  it("acepta todas las cartas que un barco quiera jugar", async () => {
     await postSail(req());
     await postTeam(req({ name: "A" }));
     await postTeam(req({ name: "B" }));
     const { teams } = await (await getState()).json();
     const [a, b] = teams;
 
-    // hora 1: A tiene una sola carta
+    // hora 1: con la regla vieja A tenía una sola carta
     expect((await postPlay(req({ attackerId: a.id, cardId: "naufrago", victimId: b.id }))).status).toBe(200);
-    const res = await postPlay(req({ attackerId: a.id, cardId: "senal-de-humo" }));
-    expect(res.status).toBe(422);
-    expect(await res.json()).toEqual({ error: "el barco no tiene cartas disponibles" });
+    expect((await postPlay(req({ attackerId: a.id, cardId: "senal-de-humo" }))).status).toBe(200);
 
-    // y tampoco puede defenderse
+    // y puede defenderse igual, aunque ya haya gastado de más
     const conDefensa = await postPlay(
       req({ attackerId: b.id, cardId: "mano-de-garfio", victimId: a.id, defense: "casco" }),
     );
-    expect(conDefensa.status).toBe(422);
-    expect(await conDefensa.json()).toEqual({
-      error: "el barco no tiene cartas disponibles para defenderse",
-    });
+    expect(conDefensa.status).toBe(200);
   });
 
   it("avisa por Slack la jugada registrada", async () => {
